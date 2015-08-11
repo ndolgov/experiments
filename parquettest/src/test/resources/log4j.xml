@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd"[<!ENTITY common SYSTEM "log4j.common.xml">] >
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
+
+    <!-- different appenders for the log4j-jdbc logging -->
+    <appender name="logs" class="org.apache.log4j.FileAppender" >
+        <param name="threshold" value="debug"/>
+        <param name="file" value="target/test.log"/>
+        <layout class="org.apache.log4j.PatternLayout" >
+            <param name="ConversionPattern" value="%d{ISO8601} %-5p - %t - %c{2} - %m%n" />
+        </layout>
+    </appender>
+
+    <category name="org.apache.hadoop.conf">
+        <level value="warn"/>
+    </category>
+
+    <root>
+        <level value="debug"/>
+        <appender-ref ref="logs"/>
+    </root>
+</log4j:configuration>
