@@ -1,0 +1,47 @@
+package net.ndolgov.thriftrpctest;
+
+import net.ndolgov.thriftrpctest.api.TestRequest;
+import net.ndolgov.thriftrpctest.api.TestResponse;
+import net.ndolgov.thriftrpctest.api.TestService;
+
+import org.apache.thrift.async.AsyncMethodCallback;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+
+/**
+ * Asynchronous RPC call handler illustrating how to process requests on a dedicated thread pool and
+ * reply asynchronously once the future is finished.
+ */
+public final class Handler implements TestService.AsyncIface {
+    private static final Logger logger = LoggerFactory.getLogger(Handler.class);
+
+    public static final String RESULT = "RESULT";
+
+    private final Executor executor;
+
+    public Handler(Executor executor) {
+        this.executor = executor;
+    }
+
+    @Override
+    public void process(TestRequest request, AsyncMethodCallback callback) {
+        logger.info("Processing: " + request);
+
+        final CompletableFuture<String> future = CompletableFuture.supplyAsync(
+            () -> {
+                return "RESULT"; // todo this is where actual time-consuming processing would be
+            },
+            executor);
+
+        future.whenComplete((result, e) -> {
+            if (e == null) {
+                callback.onComplete(new TestResponse().setSuccess(true).setResult(result).setRequestId(request.getRequestId()));
+            } else {
+                callback.onComplete(new TestResponse().setSuccess(false).setRequestId(request.getRequestId()));
+            }
+        });
+    }
+}
