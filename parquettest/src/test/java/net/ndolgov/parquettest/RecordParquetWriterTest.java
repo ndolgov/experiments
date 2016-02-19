@@ -2,29 +2,26 @@ package net.ndolgov.parquettest;
 
 import org.apache.hadoop.fs.Path;
 import org.testng.annotations.Test;
+import org.apache.log4j.Logger;
+import org.apache.log4j.LogManager;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
 
 public class RecordParquetWriterTest {
+    private static final Logger logger = LogManager.getLogger(RecordParquetWriterTest.class);
     public static final int ROWS = 1024;
 
     @Test
     public void testWriting() throws Exception {
         ParquetLoggerOverride.fixParquetJUL();
 
-        final RecordParquetWriter writer = new RecordParquetWriter(
-            new Path("target/test-file-" + System.currentTimeMillis() + ".par"),
-            newArrayList(new ColumnHeader() {
-                @Override
-                public String name() {
-                    return "Col1";
-                }
+        final String path = "target/test-file-" + System.currentTimeMillis() + ".par";
 
-                @Override
-                public ColumnType type() {
-                    return ColumnType.LONG;
-                }
-            }));
+        final RecordParquetWriter writer = new RecordParquetWriter(
+            new Path(path),
+            newArrayList(new LongColumnHeader("Col1")));
 
         for (int i = 0; i < ROWS; i++) {
             final Record record = record(i);
@@ -32,6 +29,14 @@ public class RecordParquetWriterTest {
         }
 
         writer.close();
+
+        final GenericParquetReader<MutableRecord> reader = new GenericParquetReader<>(new RecordReadSupport(), path, logger);
+        for (int i = 0; i < ROWS; i++) {
+            final MutableRecord retrieved = reader.read();
+            assertEquals(retrieved.value(), (long) i);
+        }
+        assertNull(reader.read()); // EOF
+        reader.close();
     }
 
     private Record record(int i) {
