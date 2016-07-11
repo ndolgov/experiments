@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>net.ndolgov</groupId>
+    <artifactId>flatbufferstest</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+    <name>Flat Buffers test</name>
+
+    <properties>
+        <flatbuffers.version>1.3.0.1</flatbuffers.version>
+        <guava.version>19.0</guava.version>
+        <slf4j.version>1.6.4</slf4j.version>
+        <testng.version>6.8.8</testng.version>
+
+        <flatc.path>/usr/local/opt/flatbuffers/bin/flatc</flatc.path>
+        <fbs.sources>${basedir}/src/main/flatbuffers</fbs.sources>
+        <fbs.generated.sources>${project.build.directory}/generated-sources/java</fbs.generated.sources>
+
+        <maven.build.helper.plugin.version>1.9</maven.build.helper.plugin.version>
+        <maven.compiler.plugin.version>3.5.1</maven.compiler.plugin.version>
+        <maven.dependency.plugin.version>2.10</maven.dependency.plugin.version>
+        <maven.exec.plugin.version>1.2.1</maven.exec.plugin.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>${slf4j.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${guava.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>${testng.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.davidmoten</groupId>
+            <artifactId>flatbuffers-java</artifactId>
+            <version>${flatbuffers.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven.compiler.plugin.version}</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+
+            <!-- flatbuffers build configuration is borrowed from https://github.com/davidmoten/flatbuffers -->
+            <!-- "brew install flatbuffers" was used on MacOS instead of com.github.davidmoten:flatbuffers-compiler -->
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>${maven.exec.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <phase>generate-sources</phase>
+                    </execution>
+                </executions>
+                <configuration>
+                    <executable>${flatc.path}</executable>
+                    <workingDirectory>${fbs.sources}</workingDirectory>
+                    <arguments>
+                        <argument>-j</argument>
+                        <argument>-o</argument>
+                        <argument>${fbs.generated.sources}</argument>
+                        <argument>timeseries.fbs</argument>
+                    </arguments>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>${maven.build.helper.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>add-source</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${fbs.generated.sources}</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

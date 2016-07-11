@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+<log4j:configuration>
+
+    <appender class="org.apache.log4j.ConsoleAppender" name="console">
+        <layout class="org.apache.log4j.EnhancedPatternLayout" >
+            <param name="ConversionPattern"
+                   value="%d{ISO8601} %-5p - %t - %X{reqId} - %c{2} - %m%n" />
+        </layout>
+    </appender>
+
+    <root>
+        <level value="info"/>
+        <appender-ref ref="console"/>
+    </root>
+</log4j:configuration>

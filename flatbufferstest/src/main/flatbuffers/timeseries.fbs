@@ -1,0 +1,13 @@
+//
+// A time series is a sequence of (t,v) pairs
+//
+
+namespace net.ndolgov.fbstest;
+
+table TimeSeries {
+    dataPointCount : int;
+    times : [long];
+    values : [double];
+}
+
+root_type TimeSeries;
