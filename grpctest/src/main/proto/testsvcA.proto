@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package grpctest;
+
+option java_multiple_files = false;
+option java_package = "net.ndolgov.grpctest.api";
+option java_outer_classname = "TestServiceAProto";
+option objc_class_prefix = "TS1P";
+
+
+service TestServiceA {
+    rpc Process (TestRequestA) returns (TestResponseA) {}
+}
+
+message TestRequestA {
+    int64 requestId = 1;
+}
+
+message TestResponseA {
+    bool success = 1;
+    int64 requestId = 2;
+    string result = 3;
+}
