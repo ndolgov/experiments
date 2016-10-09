@@ -11,7 +11,7 @@ import org.apache.parquet.io.api.RecordMaterializer;
 import org.apache.parquet.schema.MessageType;
 import org.apache.parquet.schema.PrimitiveType;
 
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -20,11 +20,13 @@ import static com.google.common.collect.Lists.newArrayList;
 /**
  * Implementation of {@link ReadSupport} for reading PrimitiveTypeRows of ColumnHeader-based datasets.
  */
-public class RecordReadSupport extends ReadSupport<MutableRecord> {
+public final class RecordReadSupport extends ReadSupport<MutableRecord> {
+    private final Map<String, String> metadata = new HashMap<>(32);
 
     @Override
     public ReadContext init(InitContext context) {
-        return new ReadContext(context.getFileSchema(), Collections.emptyMap());
+        metadata.putAll(context.getMergedKeyValueMetaData());
+        return new ReadContext(context.getFileSchema(), context.getMergedKeyValueMetaData());
     }
 
     @Override
@@ -33,6 +35,13 @@ public class RecordReadSupport extends ReadSupport<MutableRecord> {
                                                 MessageType fileSchema,
                                                 ReadContext readContext) {
         return new MessageReader(inferByType(fileSchema));
+    }
+
+    /**
+     * @return custom metadata associated with this file
+     */
+    public Map<String, String> metadata() {
+        return metadata;
     }
 
     private static final class MessageReader extends RecordMaterializer<MutableRecord> {
