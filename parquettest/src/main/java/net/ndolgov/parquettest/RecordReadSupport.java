@@ -20,7 +20,7 @@ import static com.google.common.collect.Lists.newArrayList;
 /**
  * Implementation of {@link ReadSupport} for reading PrimitiveTypeRows of ColumnHeader-based datasets.
  */
-public final class RecordReadSupport extends ReadSupport<MutableRecord> {
+public final class RecordReadSupport extends ReadSupport<Record> {
     private final Map<String, String> metadata = new HashMap<>(32);
 
     @Override
@@ -30,7 +30,7 @@ public final class RecordReadSupport extends ReadSupport<MutableRecord> {
     }
 
     @Override
-    public RecordMaterializer<MutableRecord> prepareForRead(Configuration configuration,
+    public RecordMaterializer<Record> prepareForRead(Configuration configuration,
                                                 Map<String, String> keyValueMetaData,
                                                 MessageType fileSchema,
                                                 ReadContext readContext) {
@@ -44,17 +44,17 @@ public final class RecordReadSupport extends ReadSupport<MutableRecord> {
         return metadata;
     }
 
-    private static final class MessageReader extends RecordMaterializer<MutableRecord> {
+    private static final class MessageReader extends RecordMaterializer<Record> {
         private final PrimitiveTypeRowGroupConverter root;
-        private final MutableRecord record;
+        private final Record record;
 
         public MessageReader(List<ColumnHeader> headers) {
-            record = new MutableRecord();
+            record = new Record(Record.NULL, Record.NULL, Record.NULL, Record.NULL);
             root = new PrimitiveTypeRowGroupConverter(fieldReaders(headers, record));
         }
 
         @Override
-        public MutableRecord getCurrentRecord() {
+        public Record getCurrentRecord() {
             return record;
         }
 
@@ -87,32 +87,34 @@ public final class RecordReadSupport extends ReadSupport<MutableRecord> {
 
     private static abstract class FieldReader extends PrimitiveConverter {
         protected final ColumnHeader header;
-        protected final MutableRecord row;
+        protected final Record row;
+        protected final int iColumn;
 
-        public FieldReader(ColumnHeader header, MutableRecord row) {
+        public FieldReader(ColumnHeader header, Record row, int iColumn) {
             this.header = header;
             this.row = row;
+            this.iColumn = iColumn;
         }
     }
 
     private static final class LongReader extends FieldReader {
-        public LongReader(ColumnHeader header, MutableRecord row) {
-            super(header, row);
+        public LongReader(ColumnHeader header, Record row, int iColumn) {
+            super(header, row, iColumn);
         }
 
         @Override
         public void addLong(long value) {
-            row.value(value);
+            row.setLong(iColumn, value);
         }
     }
 
-    private static FieldReader[] fieldReaders(List<ColumnHeader> headers, MutableRecord row) {
+    private static FieldReader[] fieldReaders(List<ColumnHeader> headers, Record row) {
         final FieldReader[] fieldReaders = new FieldReader[headers.size()];
 
         int iColumn = 0;
         for (ColumnHeader header : headers) {
             if (header.type() == ColumnHeader.ColumnType.LONG) {
-                fieldReaders[iColumn++] = new LongReader(header, row);
+                fieldReaders[iColumn++] = new LongReader(header, row, iColumn);
             }
         }
 

@@ -67,12 +67,12 @@ public final class WriterFactory {
 
         @Override
         protected final void writeValue(Record record) {
-            recordConsumer.addLong(record.value());
+            recordConsumer.addLong(record.getLong(index));
         }
 
         @Override
         protected boolean isNull(Record record) {
-            return record.value() == null;
+            return record.isNull(index);
         }
     }
 

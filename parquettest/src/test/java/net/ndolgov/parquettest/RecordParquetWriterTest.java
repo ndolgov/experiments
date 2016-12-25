@@ -19,6 +19,11 @@ import java.util.Map;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Maps.newHashMap;
+import static net.ndolgov.parquettest.RecordFields.METRIC;
+import static net.ndolgov.parquettest.RecordFields.ROW_ID;
+import static net.ndolgov.parquettest.RecordFields.TIME;
+import static net.ndolgov.parquettest.RecordFields.VALUE;
+import static net.ndolgov.parquettest.RecordFileUtil.createParquetFile;
 import static org.apache.parquet.filter2.predicate.FilterApi.eq;
 import static org.apache.parquet.filter2.predicate.FilterApi.longColumn;
 import static org.apache.parquet.filter2.predicate.FilterApi.or;
@@ -32,31 +37,40 @@ public class RecordParquetWriterTest {
     private static final String PATH = "target/test-file-" + System.currentTimeMillis() + ".par";
     private static final int ROWS = 1024;
     private static final String SCHEMA_VERSION = "SCHEMA_VERSION";
-    private static final String V2 = "2";
-    private static final String COLUMN_NAME = "Col1";
+    private static final String V3 = "3";
+    
 
     @Test
     public void testWritingAndReading() throws Exception {
         ParquetLoggerOverride.fixParquetJUL();
 
         final Map<String, String> metadata = newHashMap();
-        metadata.put(SCHEMA_VERSION, V2);
+        metadata.put(SCHEMA_VERSION, V3);
 
-        createParquetFile(PATH, metadata);
+        createRecordFile(PATH, metadata);
 
         assertCustomMetadata(metadata(PATH));
         assertMetadata(PATH);
 
-        final GenericParquetReader<MutableRecord> reader = new GenericParquetReader<>(new RecordReadSupport(), PATH);
+        final GenericParquetReader<Record> reader = new GenericParquetReader<>(new RecordReadSupport(), PATH);
         for (int i = 0; i < ROWS; i++) {
-            final MutableRecord retrieved = reader.read();
-            assertEquals(retrieved.value(), (long) i);
+            final Record retrieved = reader.read();
+            assertEquals(retrieved.getLong(ROW_ID.index()), (long) i);
         }
         assertNull(reader.read()); // EOF
         reader.close();
 
         assertDisjunctiveFilters(PATH);
         assertUserDefinedFilter(PATH);
+    }
+
+    private void createRecordFile(String path, Map<String, String> metadata) throws IOException {
+        final List<Record> rows = newArrayList();
+        for (int i = 0; i < ROWS; i++) {
+            rows.add(record(i));
+        }
+
+        createParquetFile(path, rows, metadata);
     }
 
     private static void assertDisjunctiveFilters(String path) {
@@ -66,16 +80,16 @@ public class RecordParquetWriterTest {
         final FilterCompat.Filter filter = FilterCompat.get(
             or(
                 eq(
-                    longColumn(COLUMN_NAME),
+                    longColumn(ROW_ID.columnName()),
                     minValue),
                 eq(
-                    longColumn(COLUMN_NAME),
+                    longColumn(ROW_ID.columnName()),
                     maxValue)
             ));
 
-        final GenericParquetReader<MutableRecord> filtered = new GenericParquetReader<>(new RecordReadSupport(), path, filter);
-        assertEquals(filtered.read().value(), minValue);
-        assertEquals(filtered.read().value(), maxValue);
+        final GenericParquetReader<Record> filtered = new GenericParquetReader<>(new RecordReadSupport(), path, filter);
+        assertEquals(filtered.read().getLong(ROW_ID.index()), minValue);
+        assertEquals(filtered.read().getLong(ROW_ID.index()), maxValue);
         assertNull(filtered.read()); // EOF
         filtered.close();
     }
@@ -85,27 +99,13 @@ public class RecordParquetWriterTest {
 
         final FilterCompat.Filter filter = FilterCompat.get(
             userDefined(
-                longColumn(COLUMN_NAME),
+                longColumn(ROW_ID.columnName()),
                 new FilterByValue(value)));
 
-        final GenericParquetReader<MutableRecord> filtered = new GenericParquetReader<>(new RecordReadSupport(), path, filter);
-        assertEquals(filtered.read().value(), value);
+        final GenericParquetReader<Record> filtered = new GenericParquetReader<>(new RecordReadSupport(), path, filter);
+        assertEquals(filtered.read().getLong(ROW_ID.index()), value);
         assertNull(filtered.read()); // EOF
         filtered.close();
-    }
-
-    private static void createParquetFile(String path, Map<String, String> metadata) throws IOException {
-        final RecordParquetWriter writer = new RecordParquetWriter(
-            new Path(path),
-            newArrayList(new LongColumnHeader(COLUMN_NAME)),
-            metadata);
-
-        for (int i = 0; i < ROWS; i++) {
-            final Record record = record(i);
-            writer.write(record);
-        }
-
-        writer.close();
     }
 
     /**
@@ -123,7 +123,7 @@ public class RecordParquetWriterTest {
 
         final BlockMetaData block = blocks.get(0);
         assertEquals(block.getRowCount(), ROWS);
-        assertEquals(block.getColumns().size(), 1);
+        assertEquals(block.getColumns().size(), 4);
 
         final ColumnChunkMetaData column = block.getColumns().get(0);
         assertEquals(column.getType(), PrimitiveType.PrimitiveTypeName.INT64);
@@ -137,18 +137,18 @@ public class RecordParquetWriterTest {
 
     private static void assertCustomMetadata(Map<String, String> metadata) {
         assertEquals(metadata.size(), 2);
-        assertEquals(metadata.get(SCHEMA_VERSION), V2);
+        assertEquals(metadata.get(SCHEMA_VERSION), V3);
         assertEquals(metadata.get(RecordWriteSupport.ROW_COUNT), String.valueOf(ROWS));
     }
 
-    private static Record record(int i) {
-        return new Record((long) i);
+    private static Record record(long i) {
+        return new Record(i, i, i, i);
     }
 
     private static Map<String, String> metadata(String path) {
         final RecordReadSupport support = new RecordReadSupport();
 
-        final GenericParquetReader<MutableRecord> file = new GenericParquetReader<>(support, path);
+        final GenericParquetReader<Record> file = new GenericParquetReader<>(support, path);
         file.read(); // trigger read support initialization
         final Map<String, String> metadata = support.metadata();
         file.close();
