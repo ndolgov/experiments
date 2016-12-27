@@ -11,10 +11,10 @@
         <version>1.0.0-SNAPSHOT</version>
     </parent>
     
-    <artifactId>querydsl-parquet</artifactId>
+    <artifactId>querydsl-antlr</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
-    <name>Parquet file query DSL</name>
+    <name>ANTLR4 query parser</name>
 
     <dependencies>
         <dependency>
@@ -24,21 +24,9 @@
         </dependency>
 
         <dependency>
-            <groupId>net.ndolgov.querydsl</groupId>
-            <artifactId>querydsl-antlr</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>net.ndolgov.querydsl</groupId>
-            <artifactId>querydsl-parboiled</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>net.ndolgov</groupId>
-            <artifactId>parquettest</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr4-runtime</artifactId>
+            <version>${antlr.version}</version>
         </dependency>
 
         <dependency>
@@ -72,6 +60,19 @@
                     <source>1.8</source>
                     <target>1.8</target>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.antlr</groupId>
+                <artifactId>antlr4-maven-plugin</artifactId>
+                <version>${antlr.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>antlr4</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
