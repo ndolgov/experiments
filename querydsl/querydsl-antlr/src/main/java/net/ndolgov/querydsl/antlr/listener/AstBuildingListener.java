@@ -1,4 +1,4 @@
-package net.ndolgov.querydsl.antlr;
+package net.ndolgov.querydsl.antlr.listener;
 
 import net.ndolgov.querydsl.ast.DslQuery;
 import net.ndolgov.querydsl.ast.From;

@@ -1,4 +1,4 @@
-package net.ndolgov.querydsl.antlr;
+package net.ndolgov.querydsl.antlr.listener;
 
 import net.ndolgov.querydsl.parser.DslParser;
 import net.ndolgov.querydsl.ast.DslQuery;
@@ -7,9 +7,9 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
 /**
- * ANTLR4-based DSL parser implementation
+ * ANTLR4-based DSL parser implementation that implements parse tree listener interface (and has no Java code in the grammar)
  */
-public final class AntlrDslParser implements DslParser {
+public final class AntlrListenerDslParser implements DslParser {
     @Override
     public DslQuery parse(String query) {
         try {

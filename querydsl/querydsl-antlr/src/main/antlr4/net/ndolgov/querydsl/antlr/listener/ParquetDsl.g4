@@ -1,5 +1,7 @@
 grammar ParquetDsl;
 
+import Common;
+
 query : selectExpr fromExpr whereExpr;
 
 selectExpr : 'select' ('*' | metricExpr);
@@ -18,21 +20,3 @@ conditionExpr :
 nestedCondition : '(' conditionExpr ')';
 
 longEqExpr : QUOTED_ID '=' INT;
-
-FILEPATH : ('/' | LETTER) (LETTER | DIGIT | '-' | '_' | '/' | '.')+ ;
-
-//QUOTED_FILEPATH : QUOTE FILEPATH QUOTE;
-
-QUOTED_ID : QUOTE ID QUOTE;
-
-ID : LETTER (LETTER | '_' | DIGIT)*;
-
-INT : DIGIT+ ;
-
-fragment DIGIT : '0'..'9';
-
-fragment LETTER : ('a'..'z' | 'A'..'Z') ;
-
-WS : (' ' | '\r' | '\t' | '\n')+ -> skip ;
-
-QUOTE : '\'';

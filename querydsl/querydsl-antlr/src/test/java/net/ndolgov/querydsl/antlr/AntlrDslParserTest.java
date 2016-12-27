@@ -1,10 +1,10 @@
 package net.ndolgov.querydsl.antlr;
 
+import net.ndolgov.querydsl.antlr.action.AntlrActionDslParser;
+import net.ndolgov.querydsl.antlr.listener.AntlrListenerDslParser;
 import net.ndolgov.querydsl.ast.DslQuery;
-
 import net.ndolgov.querydsl.ast.expression.AttrEqLong;
 import net.ndolgov.querydsl.ast.expression.BinaryExpr;
-
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
@@ -32,7 +32,11 @@ public final class AntlrDslParserTest {
             COLUMN2, VALUE2
         );
 
-        final DslQuery dslQuery = new AntlrDslParser().parse(query);
+        assertSelectSomeFromFile(new AntlrActionDslParser().parse(query));
+        assertSelectSomeFromFile(new AntlrListenerDslParser().parse(query));
+    }
+
+    private static void assertSelectSomeFromFile(DslQuery dslQuery) {
         assertEquals(dslQuery.selectNode.projections.get(0).metricId, METRIC1);
         assertEquals(dslQuery.selectNode.projections.get(1).metricId, METRIC2);
         assertEquals(dslQuery.fromNode.path, PATH);
@@ -57,7 +61,11 @@ public final class AntlrDslParserTest {
             COLUMN2, VALUE2
         );
 
-        final DslQuery dslQuery = new AntlrDslParser().parse(query);
+        assertSelectAllFromFile(new AntlrActionDslParser().parse(query));
+        assertSelectAllFromFile(new AntlrListenerDslParser().parse(query));
+    }
+
+    private static void assertSelectAllFromFile(DslQuery dslQuery) {
         assertTrue(dslQuery.selectNode.projections.isEmpty());
         assertTrue(dslQuery.selectNode.all());
         assertEquals(dslQuery.fromNode.path, PATH);
@@ -88,7 +96,11 @@ public final class AntlrDslParserTest {
             COLUMN2, VALUE2
         );
 
-        final DslQuery dslQuery = new AntlrDslParser().parse(query);
+        assertAlphanumericAttributes(unusualCharacterPath, new AntlrActionDslParser().parse(query));
+        assertAlphanumericAttributes(unusualCharacterPath, new AntlrListenerDslParser().parse(query));
+    }
+
+    private static void assertAlphanumericAttributes(String unusualCharacterPath, DslQuery dslQuery) {
         assertEquals(dslQuery.fromNode.path, unusualCharacterPath);
 
         final BinaryExpr disjunctive = (BinaryExpr) dslQuery.whereNode.predicate;
@@ -97,6 +109,5 @@ public final class AntlrDslParserTest {
 
         final AttrEqLong right = (AttrEqLong) disjunctive.right;
         assertEquals(COLUMN2, right.attrName);
-
     }
 }
