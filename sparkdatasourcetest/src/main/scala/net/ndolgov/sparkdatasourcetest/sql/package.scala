@@ -1,6 +1,6 @@
 package net.ndolgov.sparkdatasourcetest
 
-import org.apache.spark.sql.{DataFrame, SQLContext}
+import org.apache.spark.sql.{Dataset, Row, SQLContext}
 
 /**
   * Extend Spark API with LuceneRDD support
@@ -23,7 +23,7 @@ package object sql {
   /**
     * Extend DataFrame API
     */
-  implicit class LuceneDataFrame(df: DataFrame) {
+  implicit class LuceneDataFrame(df: Dataset[Row]) {
     /**
       * Save a data frame to the Lucene-based storage
       * @param path storage location for the given dataset

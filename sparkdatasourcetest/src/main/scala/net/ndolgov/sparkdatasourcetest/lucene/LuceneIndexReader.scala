@@ -7,16 +7,17 @@ import org.apache.hadoop.fs.Path
 import org.apache.lucene.index.DirectoryReader
 import org.apache.lucene.search.IndexSearcher
 import org.apache.lucene.store.MMapDirectory
-import org.apache.spark.Logging
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.sources.Filter
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable.ArrayBuffer
 
 /**
   * Read Rows from a Lucene index at a given location into an Array
   */
-object LuceneIndexReader extends Logging {
+object LuceneIndexReader {
+  private val logger : Logger = LoggerFactory.getLogger(LuceneIndexReader.getClass)
   private val MIN_ALLOWED = 1
 
   def apply(partitionDir : Path, schema: LuceneSchema) : Array[Row] = {
@@ -60,7 +61,7 @@ object LuceneIndexReader extends Logging {
   }
 
   private def apply(indexDir: String, docCollector : (IndexSearcher => Unit)) : Unit = {
-    logInfo("Searching dir       : " + indexDir)
+    logger.info("Searching dir       : " + indexDir)
 
     val reader: DirectoryReader = DirectoryReader.open(new MMapDirectory(new File(indexDir).toPath))
     try {
@@ -75,13 +76,13 @@ object LuceneIndexReader extends Logging {
     try {
       reader.close()
     } catch {
-      case e: Exception => logWarning("Could not close index reader")
+      case e: Exception => logger.warn("Could not close index reader")
     }
 
     try {
       directory.close()
     } catch {
-      case e: Exception => logWarning("Could not close directory")
+      case e: Exception => logger.warn("Could not close directory")
     }
   }
 }

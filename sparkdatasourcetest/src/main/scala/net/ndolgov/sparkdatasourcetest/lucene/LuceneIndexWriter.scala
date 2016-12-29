@@ -8,13 +8,15 @@ import org.apache.lucene.analysis.core.KeywordAnalyzer
 import org.apache.lucene.document.Document
 import org.apache.lucene.index.{IndexWriter, IndexWriterConfig}
 import org.apache.lucene.store.{Directory, MMapDirectory}
-import org.apache.spark.Logging
 import org.apache.spark.sql.Row
+import org.slf4j.{Logger, LoggerFactory}
 
 /**
   * Write a sequence of Rows conforming to a provided schema into a new Lucene index at a given location
   */
-object LuceneIndexWriter extends Logging {
+object LuceneIndexWriter {
+  private val logger : Logger = LoggerFactory.getLogger(LuceneIndexWriter.getClass)
+
   def writeIndex(schema : LuceneSchema, partition: Iterator[Row], indexPath: Path): Unit = {
     writeIndex(schema, partition, indexPath.toUri.toString)
   }
@@ -33,7 +35,7 @@ object LuceneIndexWriter extends Logging {
   }
 
   private def createIndex(indexDir: String, dataGenerator: (IndexWriter => Int)): Unit = {
-    logInfo("Creating Lucene index in: " + indexDir)
+    logger.info("Creating Lucene index in: " + indexDir)
 
     val directory: Directory = new MMapDirectory(new File(indexDir).toPath)
     val indexWriter = new IndexWriter(directory, new IndexWriterConfig(new KeywordAnalyzer))
@@ -41,18 +43,18 @@ object LuceneIndexWriter extends Logging {
     try {
       val count = dataGenerator(indexWriter)
 
-      logInfo("Finished Lucene index creation after processing DataFrame rows: " + count)
+      logger.info("Finished Lucene index creation after processing Dataset rows: " + count)
     } finally {
       try {
         indexWriter.close()
       } catch {
-        case e: Exception => logWarning("Could not close index writer")
+        case e: Exception => logger.warn("Could not close index writer")
       }
 
       try {
         directory.close()
       } catch {
-        case e: Exception => logWarning("Could not close index directory")
+        case e: Exception => logger.warn("Could not close index directory")
       }
     }
 

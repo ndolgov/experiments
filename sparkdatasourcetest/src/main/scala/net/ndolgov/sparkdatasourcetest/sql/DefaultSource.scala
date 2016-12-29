@@ -1,15 +1,14 @@
 package net.ndolgov.sparkdatasourcetest.sql
 
-import org.apache.spark.Logging
 import org.apache.hadoop.fs.Path
-import org.apache.spark.sql.{DataFrame, SaveMode, SQLContext}
+import org.apache.spark.sql.{Dataset, Row, SQLContext, SaveMode}
 import org.apache.spark.sql.sources.{BaseRelation, CreatableRelationProvider, DataSourceRegister, RelationProvider, SchemaRelationProvider}
 import org.apache.spark.sql.types.StructType
 
 /**
   * [[net.ndolgov.sparkdatasourcetest.sql.LuceneRelation LuceneRelation]] factory representing a Lucene-based data storage
   */
-final class DefaultSource extends RelationProvider with DataSourceRegister with CreatableRelationProvider with SchemaRelationProvider with Logging {
+final class DefaultSource extends RelationProvider with DataSourceRegister with CreatableRelationProvider with SchemaRelationProvider {
 
   override def shortName(): String = LuceneDataSource.SHORT_NAME
 
@@ -35,7 +34,7 @@ final class DefaultSource extends RelationProvider with DataSourceRegister with 
     * @param df data frame to write to the data storage represented by this instance
     * @return a relation representing the written data
     */
-  override def createRelation(sqlContext: SQLContext, mode: SaveMode, parameters: Map[String, String], df: DataFrame): BaseRelation = {
+  override def createRelation(sqlContext: SQLContext, mode: SaveMode, parameters: Map[String, String], df: Dataset[Row]): BaseRelation = {
     val relationDir = path(parameters)
     val relationPath = new Path(relationDir)
     val fs = relationPath.getFileSystem(sqlContext.sparkContext.hadoopConfiguration)

@@ -5,7 +5,7 @@ import org.apache.hadoop.fs.{FileSystem, Path, PathFilter}
 import org.apache.spark.{OneToOneDependency, Partition, SparkContext, TaskContext}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.sources.Filter
-import org.apache.spark.sql.{DataFrame, Row}
+import org.apache.spark.sql.{Dataset, Row}
 
 /**
   * A facade for multiple storage partitions. Every operation is delegated to all the partitions.
@@ -120,7 +120,7 @@ object LuceneRDD {
     * @param dataFrame input data frame
     * @return new LuceneRDD
     */
-  def apply(dataFrame: DataFrame, luceneSchema : String): LuceneRDD = {
+  def apply(dataFrame: Dataset[Row], luceneSchema : String): LuceneRDD = {
     apply(dataFrame.rdd, LuceneSchema(dataFrame.schema, luceneSchema))
   }
 
@@ -129,7 +129,7 @@ object LuceneRDD {
     * @param dataFrame data frame to count rows in
     * @return new LuceneRDD
     */
-  def apply(dataFrame: DataFrame): LuceneRDD = {
+  def apply(dataFrame: Dataset[Row]): LuceneRDD = {
     apply(dataFrame.rdd, LuceneSchema(dataFrame.schema))
   }
 }

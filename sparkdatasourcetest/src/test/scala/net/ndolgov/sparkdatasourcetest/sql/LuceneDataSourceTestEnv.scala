@@ -4,9 +4,8 @@ import java.io.File
 import java.util
 
 import com.google.common.collect.Lists
-import org.apache.spark.sql.{Row, SQLContext}
+import org.apache.spark.sql.{Row, SparkSession}
 import org.apache.spark.sql.types.{DoubleType, LongType, StructField, StructType}
-import org.apache.spark.{SparkConf, SparkContext}
 
 /**
   * Auxiliary routines used in test fixture creation
@@ -14,27 +13,16 @@ import org.apache.spark.{SparkConf, SparkContext}
 object LuceneDataSourceTestEnv {
   val ROW_NUMBER: Int = 100
 
-  def sparkContext(name : String): SparkContext = {
-    val appName: String = name + System.currentTimeMillis
-
-    val conf: SparkConf = new SparkConf().
-      setAppName(appName).
-      setMaster("local").
-      set(SparkCtxCfg.SPARK_EXECUTOR_MEMORY, "1g").
-      set(SparkCtxCfg.SPARK_SERIALIZER, SparkCtxCfg.KRYO).
-      set(SparkCtxCfg.SPARK_SQL_SHUFFLE_PARTITIONS, "2").
-      setJars(SparkCtxCfg.toAbsolutePaths("", ""))
-
-    new SparkContext(conf)
-  }
-
-  def sqlContext(sparkCtx: SparkContext): SQLContext = {
-    val sqlCtx: SQLContext = new SQLContext(sparkCtx)
-    //sqlCtx.setConf(SparkCtxCfg.SPARK_SQL_SHUFFLE_PARTITIONS, "2")
-    //sqlCtx.setConf(SparkCtxCfg.SPARK_EXECUTOR_MEMORY, "1g")
-    //sqlCtx.setConf(SparkCtxCfg.SPARK_SERIALIZER, SparkCtxCfg.KRYO)
-
-    sqlCtx
+  def sparkSession(name : String) : SparkSession = {
+    SparkSession.builder().
+      appName(name).
+      master("local").
+      config(SparkCtxCfg.SPARK_EXECUTOR_MEMORY, "1g").
+      config(SparkCtxCfg.SPARK_SERIALIZER, SparkCtxCfg.KRYO).
+      config(SparkCtxCfg.SPARK_SQL_SHUFFLE_PARTITIONS, "2").
+      config(SparkCtxCfg.SPARK_WAREHOUSE_DIR, "target/spark-warehouse").
+      config(SparkCtxCfg.SPARK_JARS, SparkCtxCfg.toAbsolutePaths("", "")).
+      getOrCreate()
   }
 
   def defaultSchema = StructType(
@@ -77,6 +65,10 @@ object SparkCtxCfg {
 
   val ALLOW_MULTIPLE_CONTEXTS = "spark.driver.allowMultipleContexts"
 
+  val SPARK_JARS = "spark.jars"
+
+  val SPARK_WAREHOUSE_DIR = "spark.sql.warehouse.dir"
+
   val KRYO = "org.apache.spark.serializer.KryoSerializer"
 
   val SPARK_SQL_SHUFFLE_PARTITIONS = "spark.sql.shuffle.partitions"
@@ -92,13 +84,13 @@ object SparkCtxCfg {
     Integer.toString(Runtime.getRuntime.availableProcessors())
   }
 
-  def toAbsolutePaths(jarsString: String, baseDir: String): Array[String] = {
+  def toAbsolutePaths(jarsString: String, baseDir: String): String = {
     if (jarsString == null || jarsString.length == 0) {
-      return Array[String](null)
+      return ""
     }
     val libDir: String = if (baseDir.endsWith(File.separator)) baseDir
     else baseDir + File.separator
-    toAbsolutePaths(libDir, jarsString.split(","))
+    toAbsolutePaths(libDir, jarsString.split(",")).mkString(",")
   }
 
   private def toAbsolutePaths(libDir: String, jarFileNames: Array[String]): Array[String] = {

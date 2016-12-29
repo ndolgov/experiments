@@ -1,10 +1,9 @@
 package net.ndolgov.sparkdatasourcetest.sql
 
-import org.apache.spark.Logging
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.sources.{BaseRelation, InsertableRelation, Filter, PrunedFilteredScan}
 import org.apache.spark.sql.types.StructType
-import org.apache.spark.sql.{DataFrame, Row, SaveMode, SQLContext}
+import org.apache.spark.sql.{Dataset, Row, SaveMode, SQLContext}
 
 /**
   * Searchable Lucene-based data storage of some application-specific scope (e.g. corresponding to a particular version of
@@ -15,7 +14,7 @@ import org.apache.spark.sql.{DataFrame, Row, SaveMode, SQLContext}
   * @param sqlContext Spark context
   */
 class LuceneRelation(relationDir: String, userSchema: LuceneSchema = null)(@transient val sqlContext: SQLContext)
-  extends BaseRelation with PrunedFilteredScan with InsertableRelation with Logging {
+  extends BaseRelation with PrunedFilteredScan with InsertableRelation {
 
   private val rddSchema : LuceneSchema = getSchema
 
@@ -37,7 +36,7 @@ class LuceneRelation(relationDir: String, userSchema: LuceneSchema = null)(@tran
     rdd.pruneAndFilter(requiredColumns, filters)
   }
 
-  override def insert(df: DataFrame, overwrite: Boolean): Unit = {
+  override def insert(df: Dataset[Row], overwrite: Boolean): Unit = {
     df.
       write.
       format(LuceneDataSource.SHORT_NAME).
