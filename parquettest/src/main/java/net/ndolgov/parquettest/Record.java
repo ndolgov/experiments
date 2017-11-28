@@ -22,11 +22,23 @@ public final class Record {
     }
 
     public long getLong(int index) {
-        return value;
+        switch (index) {
+            case 0 : return id;
+            case 1 : return metric;
+            case 2 : return time;
+            case 3 : return value;
+            default: throw new IllegalArgumentException("Unexpected column index: " + index);
+        }
     }
 
-    public void setLong(int index, long value) {
-        this.value = value;
+    public void setLong(int index, long newValue) {
+        switch (index) {
+            case 0 : id = newValue; break;
+            case 1 : metric = newValue; break;
+            case 2 : time = newValue; break;
+            case 3 : value = newValue; break;
+            default: throw new IllegalArgumentException("Unexpected column index: " + index);
+        }
     }
 
     public boolean isNull(int index) {

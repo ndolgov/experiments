@@ -56,6 +56,9 @@ public class RecordParquetWriterTest {
         for (int i = 0; i < ROWS; i++) {
             final Record retrieved = reader.read();
             assertEquals(retrieved.getLong(ROW_ID.index()), (long) i);
+            assertEquals(retrieved.getLong(METRIC.index()), (long) i);
+            assertEquals(retrieved.getLong(TIME.index()), (long) i);
+            assertEquals(retrieved.getLong(VALUE.index()), (long) i);
         }
         assertNull(reader.read()); // EOF
         reader.close();

@@ -114,7 +114,7 @@ public final class RecordReadSupport extends ReadSupport<Record> {
         int iColumn = 0;
         for (ColumnHeader header : headers) {
             if (header.type() == ColumnHeader.ColumnType.LONG) {
-                fieldReaders[iColumn++] = new LongReader(header, row, iColumn);
+                fieldReaders[iColumn] = new LongReader(header, row, iColumn++);
             }
         }
 
