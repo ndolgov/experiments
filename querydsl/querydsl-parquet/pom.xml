@@ -36,9 +36,15 @@
         </dependency>
 
         <dependency>
+            <groupId>net.ndolgov.querydsl</groupId>
+            <artifactId>querydsl-fastparse</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>net.ndolgov</groupId>
             <artifactId>parquettest</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>1.0.0-SNAPSHOT</version>
         </dependency>
 
         <dependency>

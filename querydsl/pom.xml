@@ -13,6 +13,7 @@
     <modules>
         <module>querydsl-antlr</module>
         <module>querydsl-dsl</module>
+        <module>querydsl-fastparse</module>
         <module>querydsl-parboiled</module>
         <module>querydsl-parquet</module>
     </modules>

@@ -5,6 +5,7 @@ import net.ndolgov.parquettest.Record;
 import net.ndolgov.parquettest.RecordReadSupport;
 import net.ndolgov.querydsl.antlr.action.AntlrActionDslParser;
 import net.ndolgov.querydsl.antlr.listener.AntlrListenerDslParser;
+import net.ndolgov.querydsl.fastparse.FastparseDslParser;
 import net.ndolgov.querydsl.parboiled.ParboiledDslParser;
 import net.ndolgov.querydsl.parser.DslParser;
 import org.apache.parquet.filter2.compat.FilterCompat;
@@ -38,6 +39,8 @@ public final class ParquetFileFilterQueryTest {
         assertColumnEquality(path, new AntlrListenerDslParser());
 
         assertColumnEquality(path, new AntlrActionDslParser());
+
+        assertColumnEquality(path, FastparseDslParser.apply());
     }
 
     private static void assertColumnEquality(String path, DslParser parser) {
@@ -60,7 +63,7 @@ public final class ParquetFileFilterQueryTest {
 
     private static void assertRowIds(List<Long> rowIds, String filePath, String query, DslParser parser) {
         final FilterCompat.Filter filter = ParquetQueryBuilder.build(parser.parse(query));
-        assertEquals(rowIds, rowIds(fileReader(filePath, filter)));
+        assertEquals(rowIds(fileReader(filePath, filter)), rowIds);
     }
 
     private static GenericParquetReader<Record> fileReader(String path, FilterCompat.Filter filters) {
