@@ -19,20 +19,7 @@ class FastparseDslParserTest extends FlatSpec with Assertions {
 
   "select all" should "be parsed" in {
     val query = s"select * from '$path' where ('$COL1' = $VALUE1) || ('$COL2'=$VALUE2)"
-    val dslQuery = FastparseDslParser().parse(query)
-
-    assert(dslQuery.selectNode.projections.isEmpty)
-
-    assert(dslQuery.fromNode.path == path)
-
-    var disjunctive = dslQuery.whereNode.predicate.asInstanceOf[BinaryExpr]
-      val left = disjunctive.left.asInstanceOf[AttrEqLong]
-      assert("col1" == left.attrName)
-      assert(42L == left.value)
-
-      val right = disjunctive.right.asInstanceOf[AttrEqLong]
-      assert("col2" == right.attrName)
-      assert(24L == right.value)
+    assertAst(query)
   }
 
   "select multiple ids" should "be parsed" in {
@@ -64,5 +51,38 @@ class FastparseDslParserTest extends FlatSpec with Assertions {
   "select nonsense" should "fail" in {
     val parser = FastparseDslParser()
     assertThrows[RuntimeException](parser.parse("select nonsense from '/tmp/target/file.par'"))
+  }
+
+  "DSL parser" should "be case-insensitive" in {
+    assertAst(s"select * from '$path' where ('$COL1' = $VALUE1) || ('$COL2'=$VALUE2)")
+    assertAst(s"SELECT * from '$path' where ('$COL1' = $VALUE1) || ('$COL2'=$VALUE2)")
+    assertAst(s"SeLect * from '$path' where ('$COL1' = $VALUE1) || ('$COL2'=$VALUE2)")
+    assertAst(s"select * FROM '$path' where ('$COL1' = $VALUE1) || ('$COL2'=$VALUE2)")
+    assertAst(s"SELECT * FROM '$path' WHERE ('$COL1' = $VALUE1) || ('$COL2'=$VALUE2)")
+  }
+
+  "DSL parser" should "be whitespace-resistant" in {
+    assertAst(s"select  * from '$path' where ('$COL1' = $VALUE1) || ('$COL2'=$VALUE2)")
+    assertAst(s"SELECT *  from '$path' where ( '$COL1' = $VALUE1) || ('$COL2'=$VALUE2)")
+    assertAst(s"SeLect * from '$path' where ( '$COL1' = $VALUE1) ||  ('$COL2'=$VALUE2)")
+    assertAst(s"select * FROM '$path' where ('$COL1' = $VALUE1) || ('$COL2'=$VALUE2)")
+    assertAst(s"SELECT  *  FROM  '$path'  WHERE ( '$COL1' = $VALUE1 )  ||  ( '$COL2' = $VALUE2 ) ")
+  }
+
+  private def assertAst(query: String) = {
+    val dslQuery = FastparseDslParser().parse(query)
+
+    assert(dslQuery.selectNode.projections.isEmpty)
+
+    assert(dslQuery.fromNode.path == path)
+
+    var disjunctive = dslQuery.whereNode.predicate.asInstanceOf[BinaryExpr]
+    val left = disjunctive.left.asInstanceOf[AttrEqLong]
+    assert("col1" == left.attrName)
+    assert(42L == left.value)
+
+    val right = disjunctive.right.asInstanceOf[AttrEqLong]
+    assert("col2" == right.attrName)
+    assert(24L == right.value)
   }
 }

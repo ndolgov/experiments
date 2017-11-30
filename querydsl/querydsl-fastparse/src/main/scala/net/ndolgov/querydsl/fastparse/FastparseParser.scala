@@ -1,12 +1,13 @@
 package net.ndolgov.querydsl.fastparse
 
+import fastparse.parsers.Terminals
 import net.ndolgov.querydsl.ast.{DslQuery, From, Projection, Select, Where}
 import net.ndolgov.querydsl.ast.expression.BinaryExpr.Op
 import net.ndolgov.querydsl.ast.expression.{AttrEqLong, BinaryExpr, PredicateExpr}
 import net.ndolgov.querydsl.parser.Tokens.{AND, ASTERISK, EQUALS, FROM, LPAREN, OR, RPAREN, SELECT, WHERE}
 
 import scala.collection.JavaConverters.seqAsJavaListConverter
-import scala.util.{Left, Right, Either}
+import scala.util.{Either, Left, Right}
 
 /** Actual fastparse parsers combined using mostly the same structure as CFG BNF quoted in comments */
 private final class FastparseParser {
@@ -21,6 +22,10 @@ private final class FastparseParser {
   private val lparenStr = String.valueOf(LPAREN)
   private val rparenStr = String.valueOf(RPAREN)
   private val asteriskStr = String.valueOf(ASTERISK)
+
+  private val selectAnyCase: Terminals.IgnoreCase = IgnoreCase(SELECT)
+  private val fromAnyCase: Terminals.IgnoreCase = IgnoreCase(FROM)
+  private val whereAnyCase: Terminals.IgnoreCase = IgnoreCase(WHERE)
 
   private val digit: P[Unit] = P(CharIn("0123456789"))
   private val longNumber: P[Long] = P(digit.rep(min = 1)).!.map(_.toLong)
@@ -46,12 +51,12 @@ private final class FastparseParser {
 
   // WHERE CONDITION
   private val where: P[Where] =
-    P(WHERE ~ condition).
+    P(whereAnyCase ~ condition).
       map((expr: PredicateExpr) => new Where(expr))
 
   // FROM 'abs-file-path'
   private val from: P[From] =
-    P(FROM ~ quotedString).
+    P(fromAnyCase ~ quotedString).
       map((path: String) => new From(path))
 
   // '*'
@@ -64,7 +69,7 @@ private final class FastparseParser {
 
   // SELECT '*' | METRICS
   private val select: P[Select] =
-    P(SELECT ~ (asterisk | metricIds)).
+    P(selectAnyCase ~ (asterisk | metricIds)).
       map((projections: Seq[Projection]) => new Select(projections.asJava))
 
   // SELECT FROM WHERE
