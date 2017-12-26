@@ -17,7 +17,7 @@ object LuceneDataSourceTestEnv {
   def sparkSession(name : String) : SparkSession = {
     SparkSession.builder().
       appName(name).
-      master("local").
+      master("local[2]").
       config(SparkCtxCfg.SPARK_EXECUTOR_MEMORY, "1g").
       config(SparkCtxCfg.SPARK_SERIALIZER, SparkCtxCfg.KRYO).
       config(SparkCtxCfg.SPARK_SQL_SHUFFLE_PARTITIONS, "2").

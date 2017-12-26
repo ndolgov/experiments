@@ -46,12 +46,19 @@ final class LuceneDataSourceTestSuit extends FlatSpec with Assertions {
     df.write.
       format(SHORT_NAME).
       option(PATH, path).
-      option(LUCENE_SCHEMA, "Q|S|S").
+      option(LUCENE_SCHEMA, "metric:Q|time:S|value:S").
       mode(SaveMode.Overwrite).
       save()
   }
 
   private def readFromDataSource(session: SparkSession, path : String): Unit = {
+    val metric152 = 3660152
+    val metric153 = 3660153
+    val metric154 = 3660154
+    val metric155 = 3660155
+    val metric160 = 3660160
+    val metric161 = 3660161
+
     val loaded = session.read.
       format(SHORT_NAME).
       option(PATH, path).
@@ -63,43 +70,66 @@ final class LuceneDataSourceTestSuit extends FlatSpec with Assertions {
     assert(count == LuceneDataSourceTestEnv.ROW_NUMBER)
     logger.info("Registered table with total rows: " + count)
 
-    val loadedWithSql = session.sql("SELECT metric, time, value FROM MTV_TABLE WHERE metric = 3660152")
-    assert(loadedWithSql.count() == 10)
-    loadedWithSql.show
+    val loadedWithSql1 = session.sql(s"SELECT metric, time, value FROM MTV_TABLE WHERE metric = $metric152")
+    assert(loadedWithSql1.count() == 10)
+    assert(loadedWithSql1.schema.size == 3)
+    loadedWithSql1.collect().foreach((row: Row) => assert(row.getLong(0) == metric152))
+    loadedWithSql1.show
 
-    val loadedWithSql2 = session.sql("SELECT * FROM MTV_TABLE WHERE metric = 3660153")
+    val loadedWithSql2 = session.sql(s"SELECT * FROM MTV_TABLE WHERE metric = $metric153")
     assert(loadedWithSql2.count() == 10)
+    assert(loadedWithSql2.schema.size == 3)
+    loadedWithSql2.collect().foreach((row: Row) => assert(row.getLong(0) == metric153))
     loadedWithSql2.show
 
     val table: Dataset[Row] = session.table(TABLE_NAME)
-    val loadedWithSql3 = table.filter(table(DocumentField.METRIC.name).equalTo(3660154))
+    val loadedWithSql3 = table.filter(table(DocumentField.METRIC.name).equalTo(metric154))
     assert(loadedWithSql3.count() == 10)
+    assert(loadedWithSql3.schema.size == 3)
+    loadedWithSql3.collect().foreach((row: Row) => assert(row.getLong(0) == metric154))
     loadedWithSql3.show
 
-    val loadedWithSql4 = loaded.filter(loaded(DocumentField.METRIC.name).equalTo(3660155))
+    val loadedWithSql4 = loaded.filter(loaded(DocumentField.METRIC.name).equalTo(metric155))
     assert(loadedWithSql4.count() == 10)
+    assert(loadedWithSql4.schema.size == 3)
+    loadedWithSql4.collect().foreach((row: Row) => assert(row.getLong(0) == metric155))
     loadedWithSql4.show
 
-    val loadedWithSql5 = session.sql("SELECT time, metric FROM MTV_TABLE WHERE metric = 3660155")
+    val loadedWithSql5 = session.sql(s"SELECT time, metric FROM MTV_TABLE WHERE metric = $metric155")
     assert(loadedWithSql5.count() == 10)
+    assert(loadedWithSql5.schema.size == 2)
+    loadedWithSql5.collect().foreach((row: Row) => assert(row.getLong(1) == metric155))
     loadedWithSql5.show
-  }
 
-  private def insertIntoDataSource(session: SparkSession, path : String): Unit = {
-    val schema : StructType = defaultSchema
-    val now: Long = System.currentTimeMillis
-    val rows: util.List[Row] = createTestDataFrameRows(now)
+    val loadedWithSql6 = session.sql(s"SELECT * FROM MTV_TABLE WHERE metric < $metric153")
+    loadedWithSql6.show
+    assert(loadedWithSql6.count() == 10)
+    assert(loadedWithSql6.schema.size == 3)
+    loadedWithSql6.collect().foreach((row: Row) => assert(row.getLong(0) == metric152))
 
-    val df = session.createDataFrame(rows, schema)
+    val loadedWithSql7 = session.sql(s"SELECT * FROM MTV_TABLE WHERE metric <= $metric153")
+    loadedWithSql7.show
+    assert(loadedWithSql7.count() == 20)
+    assert(loadedWithSql7.schema.size == 3)
+    loadedWithSql7.collect().foreach((row: Row) => assert((row.getLong(0) == metric152) || (row.getLong(0) == metric153)))
 
-    logger.info("Building index in directory: " + path)
+    val loadedWithSql8 = session.sql(s"SELECT * FROM MTV_TABLE WHERE metric >= $metric160")
+    loadedWithSql8.show
+    assert(loadedWithSql8.count() == 20)
+    assert(loadedWithSql8.schema.size == 3)
+    loadedWithSql8.collect().foreach((row: Row) => assert((row.getLong(0) == metric160) || (row.getLong(0) == metric161)))
 
-    df.write.
-      format(SHORT_NAME).
-      option(PATH, path).
-      option(LUCENE_SCHEMA, "Q|S|S").
-      mode(SaveMode.Overwrite).
-      save()
+    val loadedWithSql9 = session.sql(s"SELECT * FROM MTV_TABLE WHERE metric > $metric160")
+    loadedWithSql9.show
+    assert(loadedWithSql9.count() == 10)
+    assert(loadedWithSql9.schema.size == 3)
+    loadedWithSql9.collect().foreach((row: Row) => assert(row.getLong(0) == metric161))
+
+    val loadedWithSql10 = session.sql(s"SELECT metric, time, value FROM MTV_TABLE WHERE metric < $metric153 OR metric > $metric160")
+    loadedWithSql10.show
+    assert(loadedWithSql10.count() == 20)
+    assert(loadedWithSql10.schema.size == 3)
+    loadedWithSql10.collect().foreach((row: Row) => assert((row.getLong(0) == metric152) || (row.getLong(0) == metric161)))
   }
 
 }

@@ -22,7 +22,7 @@ object LuceneFieldReader {
     var outputIndex : Int = 0
     for (field <- schema.sparkSchema()) {
       if (columns.contains(field.name)) {
-        readers(outputIndex) = apply(schema, schemaIndex, outputIndex, row)
+        readers(outputIndex) = apply(field, outputIndex, row)
         outputIndex += 1
       }
       schemaIndex += 1
@@ -31,9 +31,7 @@ object LuceneFieldReader {
     readers
   }
 
-  private def apply(schema: LuceneSchema, schemaIndex: Int, outputIndex : Int, row: Array[Any]): LuceneFieldReader = {
-    val sparkField: StructField = schema.sparkField(schemaIndex)
-
+  private def apply(sparkField: StructField, outputIndex : Int, row: Array[Any]): LuceneFieldReader = {
     sparkField.dataType match {
       case LongType => new LongReader(outputIndex, row)
       case DoubleType => new DoubleReader(outputIndex, row)

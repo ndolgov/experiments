@@ -4,6 +4,7 @@ import net.ndolgov.sparkdatasourcetest.lucene.{LuceneIndexWriter, LuceneSchema}
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.sources.v2.writer.{DataSourceV2Writer, DataWriter, DataWriterFactory, WriterCommitMessage}
 
+/** Lucene data source write path */
 private final class LuceneDataSourceV2Writer(path: String, schema: LuceneSchema) extends DataSourceV2Writer {
   override def createWriterFactory(): DataWriterFactory[Row] = {
     FileUtils.mkDir(path)

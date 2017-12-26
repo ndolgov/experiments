@@ -2,8 +2,10 @@ package net.ndolgov.sparkdatasourcetest.lucene
 
 import org.apache.lucene.document.LongPoint
 import org.apache.lucene.search.{BooleanClause, BooleanQuery, MatchAllDocsQuery, Query}
-import org.apache.spark.sql.sources.{EqualTo, Filter, GreaterThan, LessThan}
+import org.apache.spark.sql.sources.{EqualTo, Filter, GreaterThan, GreaterThanOrEqual, LessThan, LessThanOrEqual}
 import org.apache.spark.sql.types.{LongType, StructField}
+
+import scala.collection.mutable.ArrayBuffer
 
 /**
   * Compile a set of Spark filters into a Lucene query
@@ -25,7 +27,7 @@ final class QueryBuilder {
 }
 
 /**
-  * Currently supported: "==", "<", ">" on indexed fields of the long type.
+  * Currently supported: "==", "<", ">", "<=", ">=" on indexed fields of the long type.
   */
 object QueryBuilder {
   def apply(filters: Array[Filter], schema : LuceneSchema) : Query = {
@@ -37,7 +39,7 @@ object QueryBuilder {
 
     filters.foreach {
       case EqualTo(attr, value) =>
-        val sparkField: StructField = schema.sparkField(assertFieldIsIndexed(schema, attr))
+        val sparkField: StructField = indexedField(schema, attr)
         val query = sparkField.dataType match {
           case LongType => LongPoint.newExactQuery(attr, value.asInstanceOf[Long])
           case _ => throw new IllegalArgumentException("Unsupported field: " + attr + " of type: " + sparkField.dataType );
@@ -46,22 +48,16 @@ object QueryBuilder {
         builder.must(query)
 
       case GreaterThan(attr, value) =>
-        val sparkField: StructField = schema.sparkField(assertFieldIsIndexed(schema, attr))
-        val query = sparkField.dataType match {
-          case LongType => LongPoint.newRangeQuery(attr, value.asInstanceOf[Long], Long.MaxValue)
-          case _ => throw new IllegalArgumentException("Unsupported field: " + attr + " of type: " + sparkField.dataType );
-        }
+        builder.must(longRangeQuery(indexedField(schema, attr), value.asInstanceOf[Long] + 1, Long.MaxValue))
 
-        builder.must(query)
+      case GreaterThanOrEqual(attr, value) =>
+        builder.must(longRangeQuery(indexedField(schema, attr), value.asInstanceOf[Long], Long.MaxValue))
 
       case LessThan(attr, value) =>
-        val sparkField: StructField = schema.sparkField(assertFieldIsIndexed(schema, attr))
-        val query = sparkField.dataType match {
-          case LongType => LongPoint.newRangeQuery(attr, Long.MinValue,  value.asInstanceOf[Long])
-          case _ => throw new IllegalArgumentException("Unsupported field: " + attr + " of type: " + sparkField.dataType );
-        }
+        builder.must(longRangeQuery(indexedField(schema, attr), Long.MinValue,  value.asInstanceOf[Long] - 1))
 
-        builder.must(query)
+      case LessThanOrEqual(attr, value) =>
+        builder.must(longRangeQuery(indexedField(schema, attr), Long.MinValue,  value.asInstanceOf[Long]))
 
       case filter : Filter => throw new IllegalArgumentException("Unsupported filter type: " + filter)
     }
@@ -69,13 +65,38 @@ object QueryBuilder {
     builder.build()
   }
 
-  private def assertFieldIsIndexed(schema: LuceneSchema, attr: String): Int = {
-    val index = schema.sparkSchema().fieldIndex(attr)
+  private def indexedField(schema: LuceneSchema, attr: String): StructField = {
+    schema.sparkField(assertFieldIsIndexed(schema, attr))
+  }
 
-    if (schema.luceneFieldType(index) == FieldType.STORED) {
+  private def longRangeQuery(sparkField: StructField, from: Long, to: Long): Query = {
+    sparkField.dataType match {
+      case LongType => LongPoint.newRangeQuery(sparkField.name, from, to)
+      case _ => throw new IllegalArgumentException("Unsupported field: " + sparkField);
+    }
+  }
+
+  def distinguishSupported(filters: Array[Filter]) : (Array[Filter], Array[Filter]) = {
+    val supported = new ArrayBuffer[Filter](filters.length)
+    val unsupported = new ArrayBuffer[Filter](filters.length)
+
+    filters.foreach {
+      case et: EqualTo => supported += et
+      case gt: GreaterThan => supported += gt
+      case gte: GreaterThanOrEqual => supported += gte
+      case lt: LessThan => supported += lt
+      case lte: LessThanOrEqual => supported += lte
+      case filter: Filter => unsupported += filter
+    }
+
+    (supported.toArray, unsupported.toArray)
+  }
+
+  private def assertFieldIsIndexed(schema: LuceneSchema, attr: String): String = {
+    if (schema.luceneField(attr).fieldType == FieldType.STORED) {
       throw new IllegalArgumentException("Field is not indexed: " + attr)
     }
 
-    index
+    attr
   }
 }
