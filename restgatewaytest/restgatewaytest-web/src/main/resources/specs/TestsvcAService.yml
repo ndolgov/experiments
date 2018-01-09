@@ -1,0 +1,50 @@
+swagger: '2.0'
+info:
+  version: not set
+  title: 'TestsvcAProto'
+  description: 'REST API generated from testsvcA.proto'
+schemes:
+  - http
+  - https
+consumes:
+  - 'application/json'
+produces:
+  - 'application/json'
+paths:
+  /restgateway/test/testservicea:
+    post:
+      tags:
+        - TestServiceA
+      summary:
+        'Process'
+      description:
+        'Generated from net.ndolgov.restgatewaytest.api.TestServiceA.Process'
+      produces:
+        ['application/json']
+      responses:
+        200:
+          description: 'Normal response'
+          schema:
+            $ref: "#/definitions/TestResponseA"
+      parameters:
+        - in: 'body'
+          name: body
+          schema:
+            $ref: "#/definitions/TestRequestA"
+definitions:
+  TestRequestA:
+    type: object
+    properties: 
+      requestId:
+        type: integer
+        format: int64
+  TestResponseA:
+    type: object
+    properties: 
+      success:
+        type: boolean
+      requestId:
+        type: integer
+        format: int64
+      result:
+        type: string

@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package net.ndolgov.restgatewaytest.api;
+
+option java_multiple_files = false;
+option java_package = "net.ndolgov.restgatewaytest.api";
+option java_outer_classname = "TestServiceBProto";
+option objc_class_prefix = "TS2P";
+
+import "google/api/annotations.proto";
+
+service TestServiceB {
+    rpc Process (TestRequestB) returns (TestResponseB) {
+        option (google.api.http) = {
+            post: "/restgateway/test/testserviceb"
+            body: "*"
+        };
+    }
+}
+
+message TestRequestB {
+    int64 requestId = 1;
+}
+
+message TestResponseB {
+    bool success = 1;
+    int64 requestId = 2;
+    string result = 3;
+}
