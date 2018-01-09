@@ -21,16 +21,16 @@ class AsyncScalaPBCallTest extends FlatSpec with Assertions {
   private val RESULT = "RESULT"
 
   it should "support two service endpoints on the same port" in {
-    val server: GrpcServer = startServer(ExecutionContext.fromExecutor(serverExecutorSvc()))
+    val server = startServer(ExecutionContext.fromExecutor(serverExecutorSvc()))
     val client = GrpcClient(HOSTNAME, PORT, clientExecutorSvc())
 
     try {
-      val fa = serviceA(client).process(TestRequestA(REQUEST_ID))
-      val fb = serviceB(client).process(TestRequestB(REQUEST_ID))
-
       implicit val clientExecutionContext: ExecutionContext = client.executionContext()
-      handleWithTimeout(fa)
-      handleWithTimeout(fb)
+
+      val fa = handle(serviceA(client).process(TestRequestA(REQUEST_ID)))
+      val fb = handle(serviceB(client).process(TestRequestB(REQUEST_ID)))
+
+      Await.ready(fa zip fb, Duration.create(5, TimeUnit.SECONDS))
     } finally {
       client.stop()
       server.stop()
@@ -50,7 +50,7 @@ class AsyncScalaPBCallTest extends FlatSpec with Assertions {
     server
   }
 
-  private def handleWithTimeout[A](future: Future[A])(implicit ec: ExecutionContext) = {
+  private def handle[A](future: Future[A])(implicit ec: ExecutionContext): Future[A] = {
     future.onComplete((triedA: Try[A]) => triedA match {
       case Success(response) =>
         logger.info("Processing response: " + response)
@@ -59,7 +59,7 @@ class AsyncScalaPBCallTest extends FlatSpec with Assertions {
         logger.error("RPC call failed ", e)
     })
 
-    Await.ready(future, Duration.create(5, TimeUnit.SECONDS))
+    future
   }
 
   private def serviceA(client: GrpcClient) = client.createClient(channel => TestServiceAGrpc.stub(channel))

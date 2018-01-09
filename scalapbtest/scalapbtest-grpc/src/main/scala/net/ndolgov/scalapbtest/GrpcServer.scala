@@ -1,10 +1,12 @@
 package net.ndolgov.scalapbtest
 
 import java.net.InetSocketAddress
+import java.util.concurrent.TimeUnit
 
 import io.grpc.netty.NettyServerBuilder
 import io.grpc.{Server, ServerServiceDefinition}
 import org.slf4j.LoggerFactory
+
 import scala.concurrent.ExecutionContext
 
 trait GrpcServer {
@@ -29,7 +31,7 @@ private final class GrpcServerImpl(server: Server, port: Int) extends GrpcServer
   override def stop(): Unit = {
     try {
       logger.info("Stopping " + this)
-      server.shutdown
+      server.shutdown().awaitTermination(5, TimeUnit.SECONDS)
       logger.info("Stopped " + this)
     } catch {
       case e: Exception =>
