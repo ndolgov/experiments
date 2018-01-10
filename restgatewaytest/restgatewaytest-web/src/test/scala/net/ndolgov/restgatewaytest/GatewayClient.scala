@@ -15,12 +15,12 @@ import scala.concurrent.{ExecutionContext, Future}
 
 import JsonMarshaller._
 
+/** This class represents the idea of "an HTTP client that can make a POST request with JSON body attached".
+  * For simplicity it's actually implemented with Apache httpclient library. Jackson JSON marshaller is used for message
+  * (de)serialization.
+  * Both could be compared to Akka HTTP-based client and Spray-based marshaller in [[https://github.com/ndolgov/experiments/tree/master/akkahttptest akkahttptest]]. */
 final class GatewayClient(client: CloseableHttpClient, url: String)(implicit val ec: ExecutionContext)  {
   private val logger = LoggerFactory.getLogger(this.getClass)
-
-  private val responseAClass = TestResponseA().getClass.asInstanceOf[Class[TestResponseA]]
-
-  private val responseBClass = TestResponseB().getClass.asInstanceOf[Class[TestResponseB]]
 
   def stop(): Unit = {
     client.close()
@@ -29,10 +29,10 @@ final class GatewayClient(client: CloseableHttpClient, url: String)(implicit val
   def executionContext() : ExecutionContext = ec
 
   def callA(request: TestRequestA) : Future[TestResponseA] = {
-    post(request, "/testservicea", responseAClass)
+    post(request, "/testservicea", classOf[TestResponseA])
   }
   def callB(request: TestRequestB) : Future[TestResponseB] = {
-    post(request, "/testserviceb", responseBClass)
+    post(request, "/testserviceb", classOf[TestResponseB])
   }
 
   private def post[REQUEST, RESPONSE](request: REQUEST, path: String, clazz: Class[RESPONSE]) : Future[RESPONSE] = {
@@ -40,7 +40,7 @@ final class GatewayClient(client: CloseableHttpClient, url: String)(implicit val
       logger.info(s"Sending $request")
       val httpRequest: HttpPost = new HttpPost(url + path)
       httpRequest.setEntity(new StringEntity(toJson(request)))
-      client.execute(httpRequest, handler[RESPONSE](clazz))
+      client.execute(httpRequest, handler(clazz))
     }
   }
 
@@ -63,7 +63,7 @@ final class GatewayClient(client: CloseableHttpClient, url: String)(implicit val
   }
 }
 
-/** Create GRPC transport to a given "host:port" destination */
+/** Create HTTP client to a given service URL */
 object GatewayClient {
   def apply(url: String, executor: ExecutorService) : GatewayClient = {
     implicit val ec: ExecutionContext = ExecutionContext.fromExecutor(executor)

@@ -38,7 +38,7 @@ class RestGatewayTest extends FlatSpec with Assertions {
     } finally {
       client.stop()
       gateway.stop()
-      server.stop()
+      server.stop(5000)
     }
   }
 

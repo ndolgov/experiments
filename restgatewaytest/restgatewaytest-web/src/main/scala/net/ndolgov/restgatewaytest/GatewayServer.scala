@@ -7,6 +7,7 @@ import grpcgateway.server.{GrpcGatewayServer, GrpcGatewayServerBuilder}
 import io.grpc.{ManagedChannel, ManagedChannelBuilder}
 import org.slf4j.LoggerFactory
 
+/** REST gateway for a gRPC service instance that can be started and stopped */
 trait GatewayServer {
   def start(): Unit
 
@@ -40,7 +41,8 @@ private final class GatewayServerImpl(server: GrpcGatewayServer, port: Int) exte
   override def toString: String = "{GatewayServer:port=" + port + "}"
 }
 
-/** Create a REST Gateway for a given GRPC server with request handlers and bind it to provided "host:port" */
+/** Create a Netty-backed REST Gateway for a given gRPC server with the request handlers created by a given factory
+  * method. Bind the gateway to a given port. Perform request redirection on a given thread pool. */
 object GatewayServer {
   def apply(serviceHost: String, servicePort: Int,
             gatewayPort: Int,
