@@ -19,6 +19,8 @@ import scala.concurrent.{ExecutionContext, Future}
 // https://stackoverflow.com/questions/41121193/akka-http-spray-json-client-side-json-marshalling
 // https://groups.google.com/forum/#!msg/akka-user/F6gniCzdNyk/FDYaVj1fCAAJ
 
+/** Test services HTTP client implemented with akka-http.
+  * It relies on spray-json (triggered with explicit Marshal/Unmarshal calls) for JSON marshalling.  */
 final class AkkaHttpClient(url: String, val executor: ExecutorService) {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
@@ -48,6 +50,16 @@ final class AkkaHttpClient(url: String, val executor: ExecutorService) {
       (entity: HttpEntity.Strict) => Unmarshal(entity).to[TestResponseB])
   }
 
+  /**
+    * Make a POST request to a given service and return the received response
+    * @param request request message
+    * @param path service-specific URL path suffix
+    * @param fromRequest request message-to-JSON marshaller
+    * @param toResponse JSON-to-response message unmarshaller
+    * @tparam REQUEST request message type
+    * @tparam RESPONSE response message type
+    * @return unmarshalled response message wrapped into a Future
+    */
   private def post[REQUEST, RESPONSE](
     request: REQUEST,
     path: String,

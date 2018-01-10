@@ -21,7 +21,6 @@ class AkkaHttpTest extends FlatSpec with Assertions {
   private val REQUEST_ID = 123
   private val HOSTNAME = "127.0.0.1"
   private val THREADS = 4
-  private val RESULT = "RESULT"
   private val TIMEOUT = 10000
 
   it should "support two service endpoints on the same port" in {

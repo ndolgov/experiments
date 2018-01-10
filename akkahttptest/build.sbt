@@ -16,7 +16,7 @@ val akkahttptest_web = Project(id = akkahttptest_web_id, base = file(akkahttptes
   ).
   settings(
     libraryDependencies ++= Seq(
-      "com.google.guava" % "guava" % guava_version % Test,
+      "com.google.guava" % "guava" % guava_version % Test, // ThreadFactoryBuilder
       "com.typesafe.akka" %% "akka-http" % akka_http_version,
       "com.typesafe.akka" %% "akka-http-core" % akka_http_version,
       "com.typesafe.akka" %% "akka-http-spray-json" % akka_http_version,

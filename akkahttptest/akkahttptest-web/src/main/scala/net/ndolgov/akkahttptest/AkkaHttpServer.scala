@@ -15,7 +15,8 @@ import scala.concurrent.{ExecutionContext, Future}
 // https://github.com/RayRoestenburg/akka-in-action/blob/master/chapter-integration/src/main/scala/aia/integration/OrderServiceApp.scala
 
 trait AkkaHttpServer {
-  def start(route: ExecutionContext => Route): Future[AkkaHttpServer]
+  /** Start an akka-http network endpoint with the request handlers created by a given factory method */
+  def start(toRoute: ExecutionContext => Route): Future[AkkaHttpServer]
 
   def stop(): Future[AkkaHttpServer]
 }
@@ -27,7 +28,10 @@ private case object FailedServer extends AkkaHttpServer {
 }
 
 private final class InitializedServer(host: String, port: Int)
-  (implicit val system: ActorSystem, implicit val ec: ExecutionContext, implicit val materializer: Materializer) extends AkkaHttpServer {
+  (implicit val system: ActorSystem,
+   implicit val ec: ExecutionContext,
+   implicit val materializer: Materializer) extends AkkaHttpServer {
+
   private val log = LoggerFactory.getLogger(this.getClass)
 
   override def start(route: ExecutionContext => Route): Future[AkkaHttpServer] = {
@@ -62,7 +66,8 @@ private final class InitializedServer(host: String, port: Int)
   }
 }
 
-object AkkaHttpServer {
+/** Create and wire together an akka-http service */
+object AkkaHttpServer extends App {
   def apply(host: String, port: Int, executor: Option[ExecutorService]) : AkkaHttpServer = {
     implicit val system: ActorSystem = ActorSystem()
     implicit val materializer: Materializer = ActorMaterializer()

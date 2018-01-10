@@ -15,6 +15,7 @@ import scala.util.{Failure, Success}
 import HttpEndpoints._
 import ServiceAJsonMarshaller._
 
+/** ServiceA HTTP end point */
 class HttpEndpointA(service: TestServiceA, requestTimeoutMs: Int) {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
@@ -26,6 +27,7 @@ class HttpEndpointA(service: TestServiceA, requestTimeoutMs: Int) {
 
   private val rejectionHandler = garbledRequestHandler(logger)
 
+  /** @return all Routes supported by this HTTP end point */
   def endpointRoutes(): Route = prefix {
     process
   }

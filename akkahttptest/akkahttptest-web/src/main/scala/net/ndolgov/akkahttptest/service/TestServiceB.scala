@@ -8,6 +8,7 @@ case class TestRequestB(requestId: Long)
 
 case class TestResponseB(success: Boolean, requestId: Long, result: String)
 
+/** Service API analogous to the one generated from "testsvcB.proto" */
 trait TestServiceB {
   def process(request: TestRequestB) : Future[TestResponseB]
 }
