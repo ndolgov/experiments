@@ -12,7 +12,6 @@ import org.apache.http.impl.client.{CloseableHttpClient, HttpClients}
 import org.apache.http.util.EntityUtils
 import org.slf4j.LoggerFactory
 import scala.concurrent.{ExecutionContext, Future}
-
 import JsonMarshaller._
 
 /** This class represents the idea of "an HTTP client that can make a POST request with JSON body attached".
@@ -58,7 +57,7 @@ final class GatewayClient(client: CloseableHttpClient, url: String)(implicit val
         throw new RuntimeException("No response body found")
       }
 
-      fromJson[RESPONSE](EntityUtils.toString(entity), clazz)
+      fromJson(EntityUtils.toString(entity), clazz)
     }
   }
 }
