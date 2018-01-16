@@ -1,5 +1,6 @@
 val akka_http_version = "10.0.10"
 val guava_version = "19.0"
+val mockito_version = "2.8.9"
 val slf4j_version = "1.6.4"
 val scalatest_version = "3.0.4"
 val scala_version = "2.12.3"
@@ -21,6 +22,7 @@ val akkahttptest_web = Project(id = akkahttptest_web_id, base = file(akkahttptes
       "com.typesafe.akka" %% "akka-http-core" % akka_http_version,
       "com.typesafe.akka" %% "akka-http-spray-json" % akka_http_version,
       "com.typesafe.akka" %% "akka-http-testkit" % akka_http_version % Test,
+      "org.mockito" % "mockito-core" % mockito_version % Test,
       "org.scalatest" %% "scalatest" % scalatest_version % Test,
       "org.slf4j" % "slf4j-api" % slf4j_version,
       "org.slf4j" % "slf4j-log4j12" % slf4j_version
