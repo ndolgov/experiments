@@ -3,12 +3,12 @@ package net.ndolgov.sparkdatasourcetest.connector
 import net.ndolgov.sparkdatasourcetest.lucene.{LuceneIndexReader, LuceneSchema, QueryBuilder}
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.sources.Filter
-import org.apache.spark.sql.sources.v2.reader.{DataReader, DataSourceV2Reader, ReadTask, SupportsPushDownFilters, SupportsPushDownRequiredColumns}
+import org.apache.spark.sql.sources.v2.reader.{DataReader, DataReaderFactory, DataSourceReader, SupportsPushDownFilters, SupportsPushDownRequiredColumns}
 import org.apache.spark.sql.types.StructType
 
 /** Lucene data source read path */
 private final class LuceneDataSourceV2Reader(path: String)
-  extends DataSourceV2Reader with SupportsPushDownFilters with SupportsPushDownRequiredColumns {
+  extends DataSourceReader with SupportsPushDownFilters with SupportsPushDownRequiredColumns {
 
   private lazy val schema = LuceneSchema.open(FilePaths.schemaFilePath(path).toUri.toString)
 
@@ -18,11 +18,11 @@ private final class LuceneDataSourceV2Reader(path: String)
 
   override def readSchema(): StructType = prunedSchema.getOrElse(schema).sparkSchema()
 
-  override def createReadTasks(): java.util.List[ReadTask[Row]] = {
+  override def createDataReaderFactories(): java.util.List[DataReaderFactory[Row]] = {
     import scala.collection.JavaConverters._
 
     FileUtils.listSubDirs(path).map((partitionDir: String) => {
-      val task: ReadTask[Row] = new LuceneReadTask(partitionDir, prunedSchema.getOrElse(schema), pushedPredicates)
+      val task: DataReaderFactory[Row] = new LuceneReadTask(partitionDir, prunedSchema.getOrElse(schema), pushedPredicates)
       task
     }).toList.asJava
   }
@@ -40,7 +40,7 @@ private final class LuceneDataSourceV2Reader(path: String)
   override def pushedFilters(): Array[Filter] = pushedPredicates
 }
 
-private final class LuceneReadTask(partitionDirStr : String, schema: LuceneSchema, filters: Array[Filter]) extends ReadTask[Row] {
+private final class LuceneReadTask(partitionDirStr : String, schema: LuceneSchema, filters: Array[Filter]) extends DataReaderFactory[Row] {
   override def createDataReader(): DataReader[Row] = new DataReader[Row] {
     private val rows: Iterator[Row] = LuceneIndexReader(partitionDirStr, schema, filters).iterator
 
@@ -53,5 +53,5 @@ private final class LuceneReadTask(partitionDirStr : String, schema: LuceneSchem
 }
 
 object LuceneDataSourceV2Reader {
-  def apply(path: String) : DataSourceV2Reader = new LuceneDataSourceV2Reader(path)
+  def apply(path: String) : DataSourceReader = new LuceneDataSourceV2Reader(path)
 }

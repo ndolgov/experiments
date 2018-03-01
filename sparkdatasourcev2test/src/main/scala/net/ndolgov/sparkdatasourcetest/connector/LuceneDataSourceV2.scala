@@ -5,18 +5,18 @@ import java.util.Optional
 import net.ndolgov.sparkdatasourcetest.lucene.LuceneSchema
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.sources.DataSourceRegister
-import org.apache.spark.sql.sources.v2.reader.DataSourceV2Reader
-import org.apache.spark.sql.sources.v2.writer.DataSourceV2Writer
-import org.apache.spark.sql.sources.v2.{DataSourceV2, DataSourceV2Options, ReadSupport, WriteSupport}
+import org.apache.spark.sql.sources.v2.reader.DataSourceReader
+import org.apache.spark.sql.sources.v2.writer.DataSourceWriter
+import org.apache.spark.sql.sources.v2.{DataSourceV2, DataSourceOptions, ReadSupport, WriteSupport}
 import org.apache.spark.sql.types.StructType
 
 final class LuceneDataSourceV2 extends DataSourceV2 with ReadSupport with WriteSupport with DataSourceRegister {
   import LuceneDataSourceV2._
 
-  override def createReader(options: DataSourceV2Options): DataSourceV2Reader =
+  override def createReader(options: DataSourceOptions): DataSourceReader =
     LuceneDataSourceV2Reader(path(options))
 
-  override def createWriter(jobId: String, schema: StructType, mode: SaveMode, options: DataSourceV2Options): Optional[DataSourceV2Writer] =
+  override def createWriter(jobId: String, schema: StructType, mode: SaveMode, options: DataSourceOptions): Optional[DataSourceWriter] =
     Optional.of(
       LuceneDataSourceV2Writer(
         path(options),
@@ -38,15 +38,15 @@ object LuceneDataSourceV2 {
   /** The Lucene schema that describes which columns are indexed and/or stored */
   val LUCENE_SCHEMA : String = "lucene.schema"
 
-  private def path(options: DataSourceV2Options): String = {
+  private def path(options: DataSourceOptions): String = {
     stringArg(PATH, options)
   }
 
-  private def luceneSchema(options: DataSourceV2Options): String = {
+  private def luceneSchema(options: DataSourceOptions): String = {
     stringArg(LUCENE_SCHEMA, options)
   }
 
-  private def stringArg(key : String, options: DataSourceV2Options): String = {
+  private def stringArg(key : String, options: DataSourceOptions): String = {
     val mayBy = options.get(key)
     if (mayBy.isPresent) mayBy.get() else throw new IllegalArgumentException("Option is missing: " + key)
   }
