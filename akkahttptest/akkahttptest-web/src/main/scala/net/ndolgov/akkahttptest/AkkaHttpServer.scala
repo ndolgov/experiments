@@ -16,13 +16,13 @@ import scala.concurrent.{ExecutionContext, Future}
 
 trait AkkaHttpServer {
   /** Start an akka-http network endpoint with the request handlers created by a given factory method */
-  def start(toRoute: ExecutionContext => Route): Future[AkkaHttpServer]
+  def start(toRoute: (ExecutionContext, Materializer) => Route): Future[AkkaHttpServer]
 
   def stop(): Future[AkkaHttpServer]
 }
 
 private case object FailedServer extends AkkaHttpServer {
-  override def start(route: ExecutionContext => Route): Future[AkkaHttpServer] = Future.failed(new RuntimeException("Already tried"))
+  override def start(route: (ExecutionContext, Materializer) => Route): Future[AkkaHttpServer] = Future.failed(new RuntimeException("Already tried"))
 
   override def stop(): Future[AkkaHttpServer] = Future.successful(this)
 }
@@ -34,11 +34,11 @@ private final class InitializedServer(host: String, port: Int)
 
   private val log = LoggerFactory.getLogger(this.getClass)
 
-  override def start(route: ExecutionContext => Route): Future[AkkaHttpServer] = {
+  override def start(route: (ExecutionContext, Materializer) => Route): Future[AkkaHttpServer] = {
     log.info(s"Starting $this")
 
     Http().
-      bindAndHandle(route(ec), host, port).
+      bindAndHandle(route(ec, materializer), host, port).
       map((binding: ServerBinding) => {
         StartedServer(binding)
       }).
@@ -57,7 +57,7 @@ private final class InitializedServer(host: String, port: Int)
   private case class StartedServer(binding: ServerBinding) extends AkkaHttpServer {
     log.info(s"Bound to ${binding.localAddress} ")
 
-    override def start(route: ExecutionContext => Route): Future[AkkaHttpServer] = Future.failed(new RuntimeException("Already started"))
+    override def start(route: (ExecutionContext, Materializer) => Route): Future[AkkaHttpServer] = Future.failed(new RuntimeException("Already started"))
 
     override def stop(): Future[AkkaHttpServer] = {
       log.info(s"Stopping $this")

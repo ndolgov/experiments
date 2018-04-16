@@ -1,7 +1,7 @@
 package net.ndolgov.akkahttptest.web
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import net.ndolgov.akkahttptest.service.{TestRequestA, TestRequestB, TestResponseA, TestResponseB}
+import net.ndolgov.akkahttptest.service.{TestRequestA, TestRequestB, TestResponseA, TestResponseB, TestResponseC}
 import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 
 // akka-http directives such as "as" and "complete" can transparently perform JSON (de)serialization as long as
@@ -18,4 +18,9 @@ object ServiceAJsonMarshaller extends SprayJsonSupport with DefaultJsonProtocol 
 object ServiceBJsonMarshaller extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val requestBMarshaller: RootJsonFormat[TestRequestB] = jsonFormat1(TestRequestB)
   implicit val responseBMarshaller: RootJsonFormat[TestResponseB] = jsonFormat3(TestResponseB)
+}
+
+/** spray-json ServiceC message marshaller */
+object ServiceCJsonMarshaller extends SprayJsonSupport with DefaultJsonProtocol {
+  implicit val responseCMarshaller: RootJsonFormat[TestResponseC] = jsonFormat1(TestResponseC)
 }

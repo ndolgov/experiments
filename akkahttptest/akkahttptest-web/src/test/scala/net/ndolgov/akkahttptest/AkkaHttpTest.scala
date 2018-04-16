@@ -6,8 +6,9 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder
 import java.util.concurrent.{ExecutorService, Executors, TimeUnit}
 
 import akka.http.scaladsl.server.Directives._
-import net.ndolgov.akkahttptest.service.{TestRequestA, TestRequestB, TestResponseA, TestResponseB, TestServiceAImpl, TestServiceBImpl}
-import net.ndolgov.akkahttptest.web.{HttpEndpointA, HttpEndpointB}
+import akka.stream.Materializer
+import net.ndolgov.akkahttptest.service.{TestRequestA, TestRequestB, TestResponseA, TestResponseB, TestServiceAImpl, TestServiceBImpl, TestServiceCImpl}
+import net.ndolgov.akkahttptest.web.{HttpEndpointA, HttpEndpointB, HttpEndpointC}
 import org.scalatest.{Assertions, FlatSpec}
 import org.slf4j.LoggerFactory
 
@@ -25,9 +26,10 @@ class AkkaHttpTest extends FlatSpec with Assertions {
 
   it should "support two service endpoints on the same port" in {
     val serverStartingUp = AkkaHttpServer(HOSTNAME, PORT, Some(serverExecutorSvc())).
-      start((ec: ExecutionContext) =>
+      start((ec: ExecutionContext, materializer: Materializer) =>
         new HttpEndpointA(new TestServiceAImpl()(ec), TIMEOUT).endpointRoutes() ~
-        new HttpEndpointB(new TestServiceBImpl()(ec), TIMEOUT).endpointRoutes())
+        new HttpEndpointB(new TestServiceBImpl()(ec), TIMEOUT).endpointRoutes() ~
+        new HttpEndpointC(new TestServiceCImpl()(ec, materializer), TIMEOUT).endpointRoutes())
     val server = Await.result(serverStartingUp, Duration.create(TIMEOUT, TimeUnit.MILLISECONDS))
 
     val client = new AkkaHttpClient(new URL("http", HOSTNAME, PORT, "/akkahttp/test").toString, clientExecutorSvc())
