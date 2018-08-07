@@ -8,7 +8,7 @@ import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.FileIO
 import org.scalatest.{Assertions, FlatSpec, Matchers}
 import org.slf4j.LoggerFactory
-import software.amazon.awssdk.core.regions.Region
+import software.amazon.awssdk.regions.Region
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext}
@@ -35,7 +35,7 @@ class S3ToAkkaStreamSpec extends FlatSpec with Assertions with Matchers {
         src.runWith(FileIO.toPath(dest))
     })
 
-    Await.ready(future, Duration.create(30, TimeUnit.SECONDS))
+    Await.result(future, Duration.create(30, TimeUnit.SECONDS))
     Files.size(dest) shouldEqual 759548
 
     Files.delete(dest)

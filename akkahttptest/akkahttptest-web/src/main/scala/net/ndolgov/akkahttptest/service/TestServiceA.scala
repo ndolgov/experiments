@@ -18,6 +18,6 @@ final class TestServiceAImpl(implicit ec: ExecutionContext) extends TestServiceA
 
   override def process(request: TestRequestA): Future[TestResponseA] = Future {
     logger.info("Computing result");  // todo this is where actual time-consuming processing would be
-    TestResponseA(success = true, request.requestId, "RESULT")
+    TestResponseA(success = true, request.requestId, "RESULTA")
   }
 }

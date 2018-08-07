@@ -6,8 +6,8 @@ import akka.stream.scaladsl.{Flow, Source}
 import akka.util.ByteString
 import org.reactivestreams.Publisher
 import org.slf4j.{Logger, LoggerFactory}
-import software.amazon.awssdk.core.async.AsyncResponseHandler
-import software.amazon.awssdk.core.regions.Region
+import software.amazon.awssdk.core.async.AsyncResponseTransformer
+import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3AsyncClient
 import software.amazon.awssdk.services.s3.model.{GetObjectRequest, GetObjectResponse}
 
@@ -48,7 +48,7 @@ private final class S3ToAkkaStream(client: S3AsyncClient, bucket: String)(implic
 }
 
 /** Create a Future that is completed when download starts */
-private final class AkkaStreamHandler(logger: Logger) extends AsyncResponseHandler[GetObjectResponse, Unit] {
+private final class AkkaStreamHandler(logger: Logger) extends AsyncResponseTransformer[GetObjectResponse, Unit] {
   private val promise = Promise[Source[ByteString, Any]]()
 
   def source() : Future[Source[ByteString, Any]] = promise.future

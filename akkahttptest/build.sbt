@@ -1,14 +1,32 @@
 val akka_version = "2.4.19"
 val akka_http_version = "10.0.10"
-val aws_sdk_version = "2.0.0-preview-9"
+val aws_sdk_version = "2.0.0-preview-11"
 val guava_version = "19.0"
 val mockito_version = "2.8.9"
 val slf4j_version = "1.6.4"
 val scalatest_version = "3.0.4"
-val scala_version = "2.12.3"
+val scala_version = "2.12.4"
 
 val group_id = "net.ndolgov"
 val project_version = "1.0.0-SNAPSHOT"
+
+val akkahttptest_saga_id = "akkahttptest-saga"
+val akkahttptest_saga = Project(id = akkahttptest_saga_id, base = file(akkahttptest_saga_id)).
+  settings(
+    name         := akkahttptest_saga_id,
+    organization := group_id,
+    version      := project_version
+  ).
+  settings(
+    libraryDependencies ++= Seq(
+      "com.typesafe.akka" %% "akka-stream" % akka_version,
+      "org.mockito" % "mockito-core" % mockito_version % Test,
+      "org.scalatest" %% "scalatest" % scalatest_version % Test,
+      "org.slf4j" % "slf4j-api" % slf4j_version,
+      "org.slf4j" % "slf4j-log4j12" % slf4j_version,
+
+    )
+  )
 
 val akkahttptest_aws_id = "akkahttptest-aws"
 val akkahttptest_aws = Project(id = akkahttptest_aws_id, base = file(akkahttptest_aws_id)).
@@ -69,6 +87,6 @@ val root = Project(id = akkahttptest_root_id, base = file(".") ).
     packageBin := { new File("") },
     packageSrc := { new File("") }
   ).
-  aggregate(akkahttptest_aws, akkahttptest_web)
+  aggregate(akkahttptest_aws, akkahttptest_saga, akkahttptest_web)
 
 
