@@ -16,7 +16,9 @@ import scala.util.{Failure, Success, Try}
   * that was inspired by
   * - https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/papers/pdf/contextflow-REBLS17.pdf.
   *
-  * See also http://blog.tmorris.net/posts/continuation-monad-in-scala/ for a Continuation Monad introduction.
+  * See http://blog.tmorris.net/posts/continuation-monad-in-scala/ for a Continuation Monad introduction.
+  *
+  * See https://stackoverflow.com/questions/6951895/what-does-and-mean-in-scala for "action: =>" meaning refresher.
   */
 trait ObjectStoreTx[A] {
   self =>
@@ -37,7 +39,7 @@ trait ObjectStoreTx[A] {
 
   final def toFuture: Future[A] = run { a: A => Future.successful(a) }
 
-  // Necessary for Scala for/yield syntax to work (https://stackoverflow.com/questions/1052476/what-is-scalas-yield)
+  // Necessary for Scala for comprehensions (https://stackoverflow.com/questions/1052476/what-is-scalas-yield)
   final def withFilter(p: A => Boolean): ObjectStoreTx[A] = new ObjectStoreTx[A] {
     override def run[R]: Continuation[A, R] = { g: Tx[A, R] =>
       self.run { a =>
@@ -55,11 +57,11 @@ trait ObjectStoreTxs {
   def toTx[A](action: => Future[A])(implicit ec: ExecutionContext): ObjectStoreTx[A] = toRevertableTx(action)(_ => Success(()))
 
   /** Create a tx from a future (that may fail) and a cleanup function (that may also fail) */
-  def toRevertableTx[A](action: => Future[A])(undo: A => Try[Unit])(implicit ec: ExecutionContext): ObjectStoreTx[A] = new ObjectStoreTx[A] {
+  def toRevertableTx[A](action: => Future[A])(rollback: A => Try[Unit])(implicit ec: ExecutionContext): ObjectStoreTx[A] = new ObjectStoreTx[A] {
     override def run[R]: Continuation[A, R] = (restOfPipeline: Tx[A, R]) =>
       for {
         a <- action
-        result <- restOfPipeline(a).transform(identity, { ex => log(undo(a)); ex })
+        result <- restOfPipeline(a).transform(identity, { ex => log(rollback(a)); ex })
       } yield result
   }
 

@@ -65,7 +65,7 @@ class ObjectStoreSagaSpec extends FlatSpec with Assertions with MockitoSugar wit
     assertions.continueRollbackOnRollbackError(
       (objId: ObjectId, blob: Array[Byte], catalog: ObjectCatalog, storage: ObjectStorage) => ComposedFuturesSaga(objId, blob, catalog, storage)(ec))
 
-    assertions.doNothingOnFileWritingError(
+    assertions.continueRollbackOnRollbackError(
       (objId: ObjectId, blob: Array[Byte], catalog: ObjectCatalog, storage: ObjectStorage) => FutureSeqSaga(objId, blob, catalog, storage)(ec))
   }
 

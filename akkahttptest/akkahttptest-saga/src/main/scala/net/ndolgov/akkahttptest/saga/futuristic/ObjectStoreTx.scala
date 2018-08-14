@@ -12,13 +12,13 @@ import scala.util.{Success, Try}
 trait ObjectStoreTx {
   def execute(ctx: TxContext): Future[Unit]
 
-  def undo(): Try[Unit]
+  def rollback(): Try[Unit]
 }
 
 private abstract class WriteToTmpLocation(path: String, storage: ObjectStorage) extends ObjectStoreTx {
   private[futuristic] val logger = LoggerFactory.getLogger(classOf[WriteToTmpLocation])
 
-  override final def undo(): Try[Unit] = storage.deleteFile(path) match {
+  override final def rollback(): Try[Unit] = storage.deleteFile(path) match {
     case Some(mayBe) =>
       mayBe
 
@@ -80,7 +80,7 @@ private[futuristic] final class CreateObjectRevision(objId: ObjectId, catalog: O
   }.
     flatMap(Future.fromTry)
 
-  override def undo(): Try[Unit] = catalog.forgetRevision(objId.copy(revision = revision))
+  override def rollback(): Try[Unit] = catalog.forgetRevision(objId.copy(revision = revision))
 
   override def toString: String = s"CreateObjectRevision($objId)"
 }
@@ -101,7 +101,7 @@ private[futuristic] final class MakeTmpFilePermanent(revisionToPath: String => S
   }.
     flatMap(Future.fromTry)
 
-  override def undo(): Try[Unit] = Success(()) // WriteXXXToTmpFile will delete the temporary file
+  override def rollback(): Try[Unit] = Success(()) // WriteXXXToTmpFile will delete the temporary file
 
   override def toString: String = s"MakeTmpFilePermanent(${tmpPath.toString} => ${permanentPath.toString})"
 }

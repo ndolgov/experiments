@@ -33,19 +33,22 @@ private[futuristic] final class ComposedFuturesSaga(txs: Seq[ObjectStoreTx])
             logger.info(s" applied ${tx.toString}")
             executeHeadTx(tail, ctx)
           }.
-          recoverWith { case e: Exception =>
-            e match {
-              case _: NestedTxException => // the actual failed tx has been logged
-              case _ => logger.error(s"Failed to execute ${tx.toString}")
+          recoverWith { case thrown: Exception =>
+            val nested = thrown match {
+              case _: NestedTxException => thrown // the actual failed tx has been logged
+
+              case _ =>
+                logger.error(s"Failed to execute ${tx.toString}")
+                new NestedTxException(thrown)
             }
 
-            tx.undo() match {
+            tx.rollback() match {
               case Success(_) => logger.info(s" reverted ${tx.toString}")
                 
               case Failure(ue) => logger.error(s"Failed to roll back ${tx.toString}", ue)
             }
 
-            Future.failed(new NestedTxException(e))
+            Future.failed(nested)
           }
       }
   }

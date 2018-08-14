@@ -64,7 +64,7 @@ private[futuristic] class FutureSeqSaga(txs: Seq[ObjectStoreTx])
     for (i <- failedTxIndex-1 to 0 by -1) {
       val tx = txs(i)
 
-      tx.undo() match {
+      tx.rollback() match {
         case Success(_) => logger.info(s" reverted ${tx.toString}")  
           
         case Failure(e) => logger.error(s"Failed to roll back ${tx.toString}", e)
