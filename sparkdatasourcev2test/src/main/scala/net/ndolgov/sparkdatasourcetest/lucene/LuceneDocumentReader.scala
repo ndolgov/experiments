@@ -2,7 +2,7 @@ package net.ndolgov.sparkdatasourcetest.lucene
 
 import org.apache.lucene.index.StoredFieldVisitor.Status
 import org.apache.lucene.index.{FieldInfo, StoredFieldVisitor}
-import org.apache.spark.sql.Row
+import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.sources.Filter
 
 import scala.collection.Set
@@ -12,14 +12,14 @@ import scala.collection.mutable.{ArrayBuffer, HashMap, Map}
   * Collect fields from matching Lucene documents into Spark rows
   */
 final class LuceneDocumentReader(val row : Array[Any], val fieldVisitor : StoredFieldVisitor) extends LuceneDocumentProcessor {
-  private val rows = new ArrayBuffer[Row](1024)
+  private val rows = new ArrayBuffer[InternalRow](1024)
 
   /** @return Lucene field visitor to apply to all matching documents */
   override def visitor(): StoredFieldVisitor = fieldVisitor
 
   /** Process Lucene document fields gathered by the [[visitor]] */
   override def onDocument(): Unit = {
-    rows += Row.fromSeq(row.clone())
+    rows += InternalRow.fromSeq(row.clone())
 
     // reset buffer; todo more efficient way?
     for (index <- row.indices) {
@@ -27,7 +27,7 @@ final class LuceneDocumentReader(val row : Array[Any], val fieldVisitor : Stored
     }
   }
 
-  def retrievedRows() : Array[Row] = if (rows.isEmpty) Array() else rows.toArray
+  def retrievedRows() : Array[InternalRow] = if (rows.isEmpty) Array() else rows.toArray
 }
 
 /**

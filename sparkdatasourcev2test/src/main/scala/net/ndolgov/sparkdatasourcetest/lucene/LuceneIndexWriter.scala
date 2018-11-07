@@ -6,7 +6,7 @@ import org.apache.lucene.analysis.core.KeywordAnalyzer
 import org.apache.lucene.document.Document
 import org.apache.lucene.index.{IndexWriter, IndexWriterConfig}
 import org.apache.lucene.store.{Directory, MMapDirectory}
-import org.apache.spark.sql.Row
+import org.apache.spark.sql.catalyst.InternalRow
 import org.slf4j.{Logger, LoggerFactory}
 
 /**
@@ -29,7 +29,7 @@ object LuceneIndexWriter {
 }
 
 trait LuceneIndexWriter {
-  def write(row: Row)
+  def write(row: InternalRow)
 
   def close()
 }
@@ -43,7 +43,7 @@ private final class LuceneIndexWriterImpl(indexWriter : IndexWriter,
                                           document : Document) extends LuceneIndexWriter {
   import LuceneIndexWriter.logger
 
-  def write(row: Row) : Unit = {
+  def write(row: InternalRow) : Unit = {
     document.clear()
 
     fieldWriter.write(row)

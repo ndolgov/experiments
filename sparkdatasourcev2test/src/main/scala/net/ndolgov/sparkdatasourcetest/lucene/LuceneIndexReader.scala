@@ -7,7 +7,7 @@ import org.apache.hadoop.fs.Path
 import org.apache.lucene.index.DirectoryReader
 import org.apache.lucene.search.IndexSearcher
 import org.apache.lucene.store.MMapDirectory
-import org.apache.spark.sql.Row
+import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.sources.Filter
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -21,7 +21,7 @@ object LuceneIndexReader {
   private val MIN_ALLOWED = 1
   private val fs = FileSystems.getDefault
 
-  def apply(indexDir : String, schema: LuceneSchema, filters: Array[Filter]) : Array[Row] = {
+  def apply(indexDir : String, schema: LuceneSchema, filters: Array[Filter]) : Array[InternalRow] = {
     apply(indexDir, schema, storedColumns(schema), filters)
   }
 
@@ -39,7 +39,7 @@ object LuceneIndexReader {
     columns
   }
 
-  private def apply(indexDir : String, schema: LuceneSchema, columns: Seq[String], filters: Array[Filter]) : Array[Row] = {
+  private def apply(indexDir : String, schema: LuceneSchema, columns: Seq[String], filters: Array[Filter]) : Array[InternalRow] = {
     val reader : LuceneDocumentReader = LuceneDocumentReader(columns, filters, schema)
     val query = new StoredFieldVisitorQuery(QueryBuilder(filters, schema), reader)
 

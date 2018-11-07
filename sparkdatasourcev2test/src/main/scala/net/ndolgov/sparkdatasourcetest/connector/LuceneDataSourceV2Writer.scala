@@ -1,12 +1,12 @@
 package net.ndolgov.sparkdatasourcetest.connector
 
 import net.ndolgov.sparkdatasourcetest.lucene.{LuceneIndexWriter, LuceneSchema}
-import org.apache.spark.sql.Row
+import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.sources.v2.writer.{DataSourceWriter, DataWriter, DataWriterFactory, WriterCommitMessage}
 
 /** Lucene data source write path */
 private final class LuceneDataSourceV2Writer(path: String, schema: LuceneSchema) extends DataSourceWriter {
-  override def createWriterFactory(): DataWriterFactory[Row] = {
+  override def createWriterFactory(): DataWriterFactory[InternalRow] = {
     FileUtils.mkDir(path)
     new LuceneDataWriterFactory(path, schema)
   }
@@ -21,17 +21,17 @@ private final class LuceneDataSourceV2Writer(path: String, schema: LuceneSchema)
   }
 }
 
-private final class LuceneDataWriterFactory(rddDir: String, schema: LuceneSchema) extends DataWriterFactory[Row] {
-  override def createDataWriter(partitionId: Int, attemptNumber: Int): DataWriter[Row] =
-    new LuceneDataWriter(FilePaths.partitionDir(rddDir, partitionId), schema)
+private final class LuceneDataWriterFactory(rddDir: String, schema: LuceneSchema) extends DataWriterFactory[InternalRow] {
+  override def createDataWriter(partitionId: Int, taskId: Long, epochId: Long): DataWriter[InternalRow] =
+    new LuceneDataWriter(FilePaths.partitionDir(rddDir, partitionId), schema) //todo taskId in file paths
 }
 
-private final class LuceneDataWriter(partitionDir: String, schema: LuceneSchema) extends DataWriter[Row] {
+private final class LuceneDataWriter(partitionDir: String, schema: LuceneSchema) extends DataWriter[InternalRow] {
   private val rddDir = FileUtils.mkDir(partitionDir)
 
   private val writer = LuceneIndexWriter(partitionDir, schema)
 
-  override def write(row: Row): Unit = writer.write(row)
+  override def write(row: InternalRow): Unit = writer.write(row)
 
   override def commit(): WriterCommitMessage = {
     close()

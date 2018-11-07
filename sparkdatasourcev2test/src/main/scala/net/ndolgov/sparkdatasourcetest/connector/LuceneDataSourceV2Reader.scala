@@ -1,9 +1,9 @@
 package net.ndolgov.sparkdatasourcetest.connector
 
 import net.ndolgov.sparkdatasourcetest.lucene.{LuceneIndexReader, LuceneSchema, QueryBuilder}
-import org.apache.spark.sql.Row
+import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.sources.Filter
-import org.apache.spark.sql.sources.v2.reader.{DataReader, DataReaderFactory, DataSourceReader, SupportsPushDownFilters, SupportsPushDownRequiredColumns}
+import org.apache.spark.sql.sources.v2.reader.{DataSourceReader, InputPartition, InputPartitionReader, SupportsPushDownFilters, SupportsPushDownRequiredColumns}
 import org.apache.spark.sql.types.StructType
 
 /** Lucene data source read path */
@@ -18,11 +18,11 @@ private final class LuceneDataSourceV2Reader(path: String)
 
   override def readSchema(): StructType = prunedSchema.getOrElse(schema).sparkSchema()
 
-  override def createDataReaderFactories(): java.util.List[DataReaderFactory[Row]] = {
+  override def planInputPartitions(): java.util.List[InputPartition[InternalRow]] = {
     import scala.collection.JavaConverters._
 
     FileUtils.listSubDirs(path).map((partitionDir: String) => {
-      val task: DataReaderFactory[Row] = new LuceneReadTask(partitionDir, prunedSchema.getOrElse(schema), pushedPredicates)
+      val task: InputPartition[InternalRow] = new LuceneReadTask(partitionDir, prunedSchema.getOrElse(schema), pushedPredicates)
       task
     }).toList.asJava
   }
@@ -40,13 +40,13 @@ private final class LuceneDataSourceV2Reader(path: String)
   override def pushedFilters(): Array[Filter] = pushedPredicates
 }
 
-private final class LuceneReadTask(partitionDirStr : String, schema: LuceneSchema, filters: Array[Filter]) extends DataReaderFactory[Row] {
-  override def createDataReader(): DataReader[Row] = new DataReader[Row] {
-    private val rows: Iterator[Row] = LuceneIndexReader(partitionDirStr, schema, filters).iterator
+private final class LuceneReadTask(partitionDirStr : String, schema: LuceneSchema, filters: Array[Filter]) extends InputPartition[InternalRow] {
+  override def createPartitionReader(): InputPartitionReader[InternalRow] = new InputPartitionReader[InternalRow] {
+    private val rows: Iterator[InternalRow] = LuceneIndexReader(partitionDirStr, schema, filters).iterator
 
     override def next(): Boolean = rows.hasNext
 
-    override def get(): Row = rows.next()
+    override def get(): InternalRow = rows.next()
 
     override def close(): Unit = {} //todo implement when LIR is a true iterator
   }

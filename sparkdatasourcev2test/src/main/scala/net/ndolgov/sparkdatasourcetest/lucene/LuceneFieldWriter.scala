@@ -1,24 +1,24 @@
 package net.ndolgov.sparkdatasourcetest.lucene
 
 import org.apache.lucene.document.Document
-import org.apache.spark.sql.Row
+import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.types.{DoubleType, LongType}
 
 /**
   * Write a Spark Row to a Lucene index as a document
   */
 trait LuceneFieldWriter {
-  def write(row : Row)
+  def write(row : InternalRow)
 }
 
 private final class RowWriter(writers : Seq[LuceneFieldWriter], document : Document) extends LuceneFieldWriter {
-  override def write(row: Row): Unit = {
+  override def write(row: InternalRow): Unit = {
     writers.foreach((writer: LuceneFieldWriter) => writer.write(row))
   }
 }
 
 private final class LongFieldWriter(index: Int, field: LuceneDocumentField, document : Document) extends LuceneFieldWriter {
-  override def write(row: Row): Unit = {
+  override def write(row: InternalRow): Unit = {
     if (!row.isNullAt(index)) {
       field.addTo(document)
       field.setLongValue(row.getLong(index))
@@ -27,7 +27,7 @@ private final class LongFieldWriter(index: Int, field: LuceneDocumentField, docu
 }
 
 private final class DoubleFieldWriter(index: Int, field: LuceneDocumentField, document: Document) extends LuceneFieldWriter {
-  override def write(row: Row): Unit = {
+  override def write(row: InternalRow): Unit = {
     if (!row.isNullAt(index)) {
       field.addTo(document)
       field.setDoubleValue(row.getDouble(index))
